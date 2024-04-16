@@ -14,6 +14,7 @@ SET x 1 KEEPTTL|OK
 set x 1 keepttl|OK
 
 # https://redis.io/docs/latest/commands/set/
+@flushall
 SET x|!wrong number of arguments for 'set' command
 SET x 1|OK
 SET x 2 NX|_
@@ -45,3 +46,20 @@ SET e 2 EXAT 1|!unsupported in redtable: SET with EXAT -- open an issue at https
 SET e 2 PEXAT 1|!unsupported in redtable: SET with PEXAT -- open an issue at https://github.com/odino/redtable/issues
 
 # https://redis.io/docs/latest/commands/flushall/
+@flushall
+FLUSHALL|^1
+SET x 1|OK
+GET x|1
+FLUSHALL|^1
+GET x|_
+SET x 1|OK
+GET x|1
+FLUSHALL ASYNC|OK
+@sleep 0.250
+GET x|_
+SET x 1|OK
+GET x|1
+FLUSHALL SYNC|OK
+GET x|_
+FLUSHALL SYNC ASYNC|!syntax error
+FLUSHALL X|!syntax error

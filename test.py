@@ -15,10 +15,13 @@ with open("tests.txt") as file:
             continue
         
         if line.startswith("@sleep"):
-            print(line)
             secs = line.split(" ")[1]
             import time
             time.sleep(float(secs))
+            continue
+        
+        if line.startswith("@flushall"):
+            redis_client.flushall()
             continue
         
         cmd, exp = line.split("|")
@@ -30,9 +33,11 @@ with open("tests.txt") as file:
         # int returns
         if exp[0] == "$":
             exp = int(exp[1:])
-            
+        # bool returns
+        elif exp[0] == "^":
+            exp = bool(int(exp[1:]))
         # null returns
-        if exp == "_":
+        elif exp == "_":
             exp = None
         
         try:

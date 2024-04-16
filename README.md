@@ -11,10 +11,11 @@ A (somewhat) redis-compliant server, backed by BigTable.
 Supported commands:
 
 ```
+FLUSHALL
 SET
 ```
 
-These features are not supported:
+These features are not supported (but most likely under evaluation):
 
 ```
 SET with EXAT 
@@ -102,7 +103,6 @@ EXPIRETIME
 FAILOVER
 FCALL
 FCALL_RO
-FLUSHALL
 FLUSHDB
 FUNCTION
 FUNCTION|DELETE
