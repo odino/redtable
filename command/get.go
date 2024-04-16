@@ -12,15 +12,21 @@ type Get struct {
 	Key string
 }
 
-func (cmd *Get) Run(ctx context.Context, args []string, tbl *bigtable.Table) (any, error) {
+func (cmd *Get) Parse(args []string) error {
 	if len(args) < 1 {
-		return "", errors.New("GET requires at least a key")
+		return errors.New("GET requires at least a key")
 	}
 
-	row, err := tbl.ReadRow(ctx, args[0], bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	cmd.Key = args[0]
+
+	return nil
+}
+
+func (cmd *Get) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
+	row, err := tbl.ReadRow(ctx, cmd.Key, bigtable.RowFilter(bigtable.LatestNFilter(1)))
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	v, ok := row["_values"]

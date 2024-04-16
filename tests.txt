@@ -1,6 +1,8 @@
 # https://redis.io/docs/latest/commands/
 # first https://redis.io/docs/latest/commands/?group=generic
 
+XYZ|!unknown command 'XYZ', with args beginning with: 
+
 # https://redis.io/docs/latest/commands/set/
 SET x|!wrong number of arguments for 'set' command
 SET x 1|OK
@@ -27,3 +29,5 @@ SET c 1 EX 10|OK
 SET c 1 KEEPTTL|OK
 TTL c|$10
 SET c 1 EX 10 KEEPTTL|!syntax error
+SET d 1 GET|_
+SET d 2 GET|1

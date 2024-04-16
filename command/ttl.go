@@ -13,12 +13,18 @@ type TTL struct {
 	Key string
 }
 
-func (cmd *TTL) Run(ctx context.Context, args []string, tbl *bigtable.Table) (any, error) {
+func (cmd *TTL) Parse(args []string) error {
 	if len(args) < 1 {
-		return "", errors.New("TTL requires at least a key")
+		errors.New("TTL requires at least a key")
 	}
 
-	row, err := tbl.ReadRow(ctx, args[0], bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	cmd.Key = args[0]
+
+	return nil
+}
+
+func (cmd *TTL) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
+	row, err := tbl.ReadRow(ctx, cmd.Key, bigtable.RowFilter(bigtable.LatestNFilter(1)))
 
 	if err != nil {
 		return "", err

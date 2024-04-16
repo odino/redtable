@@ -3,6 +3,9 @@ services:
     build: .
     environment:
       PORT: 6380
+      PROJECT: redtable-test-project
+      INSTANCE: redtable-test-instance
+      TABLE: redtable
     ports:
       - "6380:6380"
     volumes:

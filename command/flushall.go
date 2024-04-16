@@ -9,7 +9,11 @@ import (
 
 type FlushAll struct{}
 
-func (cmd *FlushAll) Run(ctx context.Context, args []string, tbl *bigtable.Table) (any, error) {
+func (cmd *FlushAll) Parse(args []string) error {
+	return nil
+}
+
+func (cmd *FlushAll) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	keys := []string{}
 	muts := []*bigtable.Mutation{}
 

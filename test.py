@@ -8,10 +8,10 @@ redis_client.flushall()
 
 with open("tests.txt") as file:
     for line in file:
-        line = line.rstrip()
+        line = line.rstrip("\n")
         print(line)
         
-        if line == "" or line[0] == "#":
+        if line in ("", " ") or line[0] == "#":
             continue
         
         if line.startswith("@sleep"):

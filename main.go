@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
-	"strings"
+	"time"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/command"
@@ -13,12 +14,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var project = "redtable-test-project"
-var instance = "redtable-test-instance"
-var tableName = "redtable"
-
 func main() {
-	port := getPort()
+	time.Sleep(1 * time.Second)
+	port := getenv("PORT", "6379")
+	project := getenv("PROJECT")
+	instance := getenv("INSTANCE")
+	tableName := getenv("TABLE")
 
 	admin, err := bigtable.NewAdminClient(context.Background(), project, instance)
 
@@ -48,7 +49,8 @@ func main() {
 	tbl := client.Open(tableName)
 
 	log.Printf("starting redtable server at %s", port)
-	err = redcon.ListenAndServe(port,
+
+	err = redcon.ListenAndServe(":"+port,
 		func(conn redcon.Conn, cmd redcon.Command) {
 			cmds := []string{}
 
@@ -56,7 +58,7 @@ func main() {
 				cmds = append(cmds, string(c))
 			}
 
-			res, err := command.Process(strings.ToLower(cmds[0]), cmds[1:], tbl)
+			res, err := command.Process(cmds[0], cmds[1:], tbl)
 
 			if err != nil {
 				conn.WriteError(err.Error())
@@ -67,13 +69,11 @@ func main() {
 
 		},
 		func(conn redcon.Conn) bool {
-			// Use this function to accept or deny the connection.
-			// log.Printf("accept: %s", conn.RemoteAddr())
+			log.Printf("accept: %s", conn.RemoteAddr())
 			return true
 		},
 		func(conn redcon.Conn, err error) {
-			// This is called when the connection has been closed
-			// log.Printf("closed: %s, err: %v", conn.RemoteAddr(), err)
+			log.Printf("closed: %s, err: %v", conn.RemoteAddr(), err)
 		},
 	)
 
@@ -82,12 +82,16 @@ func main() {
 	}
 }
 
-func getPort() string {
-	port, ok := os.LookupEnv("PORT")
+func getenv(key string, defaults ...string) string {
+	v, ok := os.LookupEnv(key)
 
 	if !ok {
-		port = "6379"
+		if len(defaults) == 0 {
+			panic(fmt.Sprintf("must provide env var '%s'", key))
+		}
+
+		v = defaults[0]
 	}
 
-	return ":" + port
+	return v
 }

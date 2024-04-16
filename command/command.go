@@ -3,35 +3,52 @@ package command
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"cloud.google.com/go/bigtable"
 )
 
 type Command interface {
-	Run(context.Context, []string, *bigtable.Table) (any, error)
+	Parse([]string) error
+	Run(context.Context, *bigtable.Table) (any, error)
 }
 
-type Commander func() Command
+func getCmd(s string, args []string) (Command, error) {
+	var cmd Command
+	var err error
 
-var commands map[string]Commander
-
-func init() {
-	commands = map[string]Commander{
-		"ping":     func() Command { return &Ping{} },
-		"flushall": func() Command { return &FlushAll{} },
-		"set":      func() Command { return &Set{} },
-		"del":      func() Command { return &Del{} },
-		"get":      func() Command { return &Get{} },
-		"ttl":      func() Command { return &TTL{} },
+	switch strings.ToLower(s) {
+	case "ping":
+		cmd = &Ping{}
+	case "flushall":
+		cmd = &FlushAll{}
+	case "set":
+		cmd = &Set{}
+	case "get":
+		cmd = &Get{}
+	case "del":
+		cmd = &Del{}
+	case "ttl":
+		cmd = &TTL{}
+	default:
+		err = fmt.Errorf("unknown command '%s', with args beginning with: %s", s, strings.Join(args, ","))
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = cmd.Parse(args)
+
+	return cmd, err
 }
 
 func Process(cmd string, args []string, tbl *bigtable.Table) (any, error) {
-	c, ok := commands[cmd]
+	c, err := getCmd(cmd, args)
 
-	if !ok {
-		return "", fmt.Errorf("unknown command '%s'", cmd)
+	if err != nil {
+		return "", err
 	}
 
-	return c().Run(context.TODO(), args, tbl)
+	return c.Run(context.TODO(), tbl)
 }

@@ -8,6 +8,10 @@ import (
 
 type Ping struct{}
 
-func (cmd *Ping) Run(ctx context.Context, args []string, tbl *bigtable.Table) (any, error) {
+func (cmd *Ping) Parse(args []string) error {
+	return nil
+}
+
+func (cmd *Ping) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	return "PONG", nil
 }

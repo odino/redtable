@@ -14,4 +14,4 @@ COPY . /src
 
 ENV BIGTABLE_EMULATOR_HOST=bigtable:8086
 
-CMD sleep 2 && air
+CMD air

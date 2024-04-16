@@ -9,8 +9,8 @@ import (
 	"cloud.google.com/go/bigtable"
 )
 
-func errsyntax() (any, error) {
-	return nil, errors.New("syntax error")
+func errsyntax() error {
+	return errors.New("syntax error")
 }
 
 type Set struct {
@@ -18,13 +18,14 @@ type Set struct {
 	Value   string
 	NX      bool
 	XX      bool
+	Get     bool
 	EX      time.Time
 	KeepTTL bool
 }
 
-func (cmd *Set) Run(ctx context.Context, args []string, tbl *bigtable.Table) (any, error) {
+func (cmd *Set) Parse(args []string) error {
 	if len(args) < 2 {
-		return "", errors.New("wrong number of arguments for 'set' command")
+		return errors.New("wrong number of arguments for 'set' command")
 	}
 
 	var skip bool
@@ -55,7 +56,7 @@ func (cmd *Set) Run(ctx context.Context, args []string, tbl *bigtable.Table) (an
 			skip = true
 
 			if err != nil {
-				return nil, errors.New("value is not an integer or out of range")
+				return errors.New("value is not an integer or out of range")
 			}
 
 			unit := time.Second
@@ -83,9 +84,28 @@ func (cmd *Set) Run(ctx context.Context, args []string, tbl *bigtable.Table) (an
 			continue
 		}
 
+		if arg == "GET" {
+			cmd.Get = true
+			continue
+		}
+
 		return errsyntax()
 	}
 
+	if !cmd.EX.IsZero() {
+		if cmd.KeepTTL {
+			return errsyntax()
+		}
+	}
+
+	if cmd.NX && cmd.XX {
+		return errsyntax()
+	}
+
+	return nil
+}
+
+func (cmd *Set) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	mut := bigtable.NewMutation()
 	mut.Set("_values", "value", bigtable.ServerTime, []byte(cmd.Value))
 
@@ -94,34 +114,35 @@ func (cmd *Set) Run(ctx context.Context, args []string, tbl *bigtable.Table) (an
 	}
 
 	if !cmd.EX.IsZero() {
-		if cmd.KeepTTL {
-			return errsyntax()
-		}
-
 		mut.Set("_values", "exp", bigtable.ServerTime, []byte(cmd.EX.Format("2006-01-02 15:04:05.999999999 -0700 MST")))
 	}
 
-	if cmd.NX || cmd.XX {
-		if cmd.NX && cmd.XX {
-			return errsyntax()
-		}
+	var ret any
 
-		row, err := tbl.ReadRow(ctx, cmd.Key)
+	ret = "OK"
+
+	if cmd.NX || cmd.XX || cmd.Get {
+		get := &Get{Key: cmd.Key}
+		val, err := get.Run(ctx, tbl)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if len(row) != 0 && cmd.NX {
+		if val != nil && cmd.NX {
 			return nil, nil
 		}
 
-		if len(row) == 0 && cmd.XX {
+		if val == nil && cmd.XX {
 			return nil, nil
+		}
+
+		if cmd.Get {
+			ret = val
 		}
 	}
 
 	err := tbl.Apply(ctx, cmd.Key, mut)
 
-	return "OK", err
+	return ret, err
 }
