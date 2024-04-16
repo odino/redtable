@@ -7,11 +7,17 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build the stack
         run: docker compose up -d
+      - name: logs pre
+        run: docker compose logs
       - uses: nick-fields/retry@v3
         with:
           timeout_seconds: 120
           max_attempts: 10
           retry_on: error
-          command: sleep 5 && ((`docker compose ps --format "{{.Service}} {{.State}}" | grep running |wc -l` == 4))
+          command: ((`docker compose ps --format "{{.Service}} {{.State}}" | grep running |wc -l` == 4))
+      - name: sleep (todo remove)
+        run: sleep 30
+      - name: logs post
+        run: docker compose logs
       - name: Test
         run: make test
