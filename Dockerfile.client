@@ -1,7 +1,6 @@
-FROM python:3
+FROM python:3-alpine
 
-RUN apt-get update
-RUN apt-get install bash -y
+RUN apk add --update bash
 
 WORKDIR /src
 RUN pip install redis

@@ -1,7 +1,6 @@
-FROM golang:1.22
+FROM golang:1.22-alpine
 
-RUN apt-get update
-RUN apt-get install bash -y
+RUN apk add --update bash
 
 RUN go install github.com/cosmtrek/air@latest
 
