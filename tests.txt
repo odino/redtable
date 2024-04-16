@@ -1,0 +1,29 @@
+# https://redis.io/docs/latest/commands/
+# first https://redis.io/docs/latest/commands/?group=generic
+
+# https://redis.io/docs/latest/commands/set/
+SET x|!wrong number of arguments for 'set' command
+SET x 1|OK
+SET x 2 NX|_
+SET x 2 NX XX|!syntax error
+SET y 2 WRONG_OPT|!syntax error
+SET z 1 XX|_
+SET z 1|OK
+SET z 2 XX|OK
+SET a 1 EX 1|OK
+SET a 1 EX NX|!value is not an integer or out of range
+GET a|1
+@sleep 1.1
+GET a|_
+SET b 1 EX 1 PX 1|!syntax error
+SET b 1 PX 50|OK
+GET b|1
+@sleep 0.1
+GET b|_
+SET c 1 EX 10|OK
+SET c 1|OK
+TTL c|$-1
+SET c 1 EX 10|OK
+SET c 1 KEEPTTL|OK
+TTL c|$10
+SET c 1 EX 10 KEEPTTL|!syntax error
