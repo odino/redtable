@@ -9,7 +9,7 @@ import (
 
 type Ping struct{}
 
-func (cmd *Ping) Parse(args []string) error {
+func (cmd *Ping) Parse(args []resp.Arg) error {
 	return nil
 }
 

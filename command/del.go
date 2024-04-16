@@ -2,21 +2,21 @@ package command
 
 import (
 	"context"
-	"errors"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odino/redtable/resp"
 )
 
 type Del struct {
 	Key string
 }
 
-func (cmd *Del) Parse(args []string) error {
+func (cmd *Del) Parse(args []resp.Arg) error {
 	if len(args) < 1 {
-		return errors.New("SET requires at least a key and a value")
+		return resp.ErrSyntax()
 	}
 
-	cmd.Key = args[0]
+	cmd.Key = string(args[0])
 
 	return nil
 }

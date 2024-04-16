@@ -3,6 +3,7 @@ package resp
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/tidwall/redcon"
 )
@@ -20,3 +21,9 @@ func SimpleString(s string) redcon.SimpleString {
 }
 
 var OK = SimpleString("OK")
+
+type Arg string
+
+func (a Arg) IsOption(s string) bool {
+	return strings.EqualFold(s, string(a))
+}

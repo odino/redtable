@@ -10,7 +10,7 @@ import (
 
 type FlushAll struct{}
 
-func (cmd *FlushAll) Parse(args []string) error {
+func (cmd *FlushAll) Parse(args []resp.Arg) error {
 	return nil
 }
 

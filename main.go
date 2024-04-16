@@ -9,6 +9,7 @@ import (
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/command"
+	"github.com/odino/redtable/resp"
 	"github.com/tidwall/redcon"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -52,13 +53,13 @@ func main() {
 
 	err = redcon.ListenAndServe(":"+port,
 		func(conn redcon.Conn, cmd redcon.Command) {
-			cmds := []string{}
+			cmds := []resp.Arg{}
 
 			for _, c := range cmd.Args {
-				cmds = append(cmds, string(c))
+				cmds = append(cmds, resp.Arg(c))
 			}
 
-			res, err := command.Process(cmds[0], cmds[1:], tbl)
+			res, err := command.Process(string(cmds[0]), cmds[1:], tbl)
 
 			if err != nil {
 				conn.WriteError(err.Error())

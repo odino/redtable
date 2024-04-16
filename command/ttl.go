@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odino/redtable/resp"
 	"github.com/tidwall/redcon"
 )
 
@@ -13,12 +14,12 @@ type TTL struct {
 	Key string
 }
 
-func (cmd *TTL) Parse(args []string) error {
+func (cmd *TTL) Parse(args []resp.Arg) error {
 	if len(args) < 1 {
 		errors.New("TTL requires at least a key")
 	}
 
-	cmd.Key = args[0]
+	cmd.Key = string(args[0])
 
 	return nil
 }

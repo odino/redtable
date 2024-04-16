@@ -21,7 +21,7 @@ type Set struct {
 	KeepTTL bool
 }
 
-func (cmd *Set) Parse(args []string) error {
+func (cmd *Set) Parse(args []resp.Arg) error {
 	if len(args) < 2 {
 		return errors.New("wrong number of arguments for 'set' command")
 	}
@@ -34,27 +34,27 @@ func (cmd *Set) Parse(args []string) error {
 		}
 
 		if i == 0 {
-			cmd.Key = arg
+			cmd.Key = string(arg)
 			continue
 		}
 
 		if i == 1 {
-			cmd.Value = arg
+			cmd.Value = string(arg)
 			continue
 		}
 
-		if arg == "EXAT" || arg == "PEXAT" {
+		if arg.IsOption("EXAT") || arg.IsOption("PEXAT") {
 			return resp.ErrUnsupportedInRedtable(fmt.Sprintf("SET with %s", arg))
 		}
 
-		if arg == "EX" || arg == "PX" {
+		if arg.IsOption("EX") || arg.IsOption("PX") {
 			// an expiry was already set, wtf are we doing?
 			if !cmd.EX.IsZero() {
 				return resp.ErrSyntax()
 			}
 
 			ts := time.Now()
-			val, err := strconv.Atoi(args[i+1])
+			val, err := strconv.Atoi(string(args[i+1]))
 			skip = true
 
 			if err != nil {
@@ -63,7 +63,7 @@ func (cmd *Set) Parse(args []string) error {
 
 			unit := time.Second
 
-			if arg == "PX" {
+			if arg.IsOption("PX") {
 				unit = time.Millisecond
 			}
 
@@ -71,22 +71,22 @@ func (cmd *Set) Parse(args []string) error {
 			continue
 		}
 
-		if arg == "KEEPTTL" {
+		if arg.IsOption("KEEPTTL") {
 			cmd.KeepTTL = true
 			continue
 		}
 
-		if arg == "NX" {
+		if arg.IsOption("NX") {
 			cmd.NX = true
 			continue
 		}
 
-		if arg == "XX" {
+		if arg.IsOption("XX") {
 			cmd.XX = true
 			continue
 		}
 
-		if arg == "GET" {
+		if arg.IsOption("GET") {
 			cmd.Get = true
 			continue
 		}

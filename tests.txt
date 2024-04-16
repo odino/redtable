@@ -1,8 +1,17 @@
 # https://redis.io/docs/latest/commands/
 # first https://redis.io/docs/latest/commands/?group=generic
 
+# unknown commands
 XYZ|!unknown command 'XYZ', with args beginning with: 
 XYZ 1 2 3|!unknown command 'XYZ', with args beginning with: '1' '2' '3' 
+
+# case in command
+SET x 1|OK
+set x 1|OK
+
+# case in option
+SET x 1 KEEPTTL|OK
+set x 1 keepttl|OK
 
 # https://redis.io/docs/latest/commands/set/
 SET x|!wrong number of arguments for 'set' command

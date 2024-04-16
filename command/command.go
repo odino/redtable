@@ -6,14 +6,15 @@ import (
 	"strings"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odino/redtable/resp"
 )
 
 type Command interface {
-	Parse([]string) error
+	Parse([]resp.Arg) error
 	Run(context.Context, *bigtable.Table) (any, error)
 }
 
-func getCmd(s string, args []string) (Command, error) {
+func getCmd(s string, args []resp.Arg) (Command, error) {
 	var cmd Command
 	var err error
 
@@ -49,7 +50,7 @@ func getCmd(s string, args []string) (Command, error) {
 	return cmd, err
 }
 
-func Process(cmd string, args []string, tbl *bigtable.Table) (any, error) {
+func Process(cmd string, args []resp.Arg, tbl *bigtable.Table) (any, error) {
 	c, err := getCmd(cmd, args)
 
 	if err != nil {

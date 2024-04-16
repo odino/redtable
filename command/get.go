@@ -6,18 +6,19 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odino/redtable/resp"
 )
 
 type Get struct {
 	Key string
 }
 
-func (cmd *Get) Parse(args []string) error {
+func (cmd *Get) Parse(args []resp.Arg) error {
 	if len(args) < 1 {
 		return errors.New("GET requires at least a key")
 	}
 
-	cmd.Key = args[0]
+	cmd.Key = string(args[0])
 
 	return nil
 }
