@@ -3,6 +3,7 @@ package command
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -40,6 +41,10 @@ func (cmd *Set) Parse(args []string) error {
 		if i == 1 {
 			cmd.Value = arg
 			continue
+		}
+
+		if arg == "EXAT" || arg == "PEXAT" {
+			return resp.ErrUnsupportedInRedtable(fmt.Sprintf("SET with %s", arg))
 		}
 
 		if arg == "EX" || arg == "PX" {

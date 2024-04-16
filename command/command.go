@@ -31,7 +31,13 @@ func getCmd(s string, args []string) (Command, error) {
 	case "ttl":
 		cmd = &TTL{}
 	default:
-		err = fmt.Errorf("unknown command '%s', with args beginning with: %s", s, strings.Join(args, ","))
+		fmtargs := []string{}
+
+		for _, s := range args {
+			fmtargs = append(fmtargs, fmt.Sprintf("'%s' ", s))
+		}
+
+		err = fmt.Errorf("unknown command '%s', with args beginning with: %s", s, strings.Join(fmtargs, ""))
 	}
 
 	if err != nil {

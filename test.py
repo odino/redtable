@@ -23,7 +23,11 @@ with open("tests.txt") as file:
         
         cmd, exp = line.split("|")
         
-        # it returns
+        # these ca be skipped, they're there as a reference of stuff to add
+        if exp.startswith("!unsupported in redtable"):
+            continue
+        
+        # int returns
         if exp[0] == "$":
             exp = int(exp[1:])
             
@@ -45,3 +49,5 @@ with open("tests.txt") as file:
             
         assert exp == got, f'"{exp}" expected, got "{got}" (type {type(got)})'
         print(f"{cmd} > {exp} PASSED")
+        
+print("ALL TESTS PASSED")
