@@ -8,6 +8,6 @@ jobs:
       - name: Build the stack
         run: docker compose up -d
       - name: wait for things to be up (sorry 😬)
-        run: sleep 10
+        run: sleep 30
       - name: Test
         run: make test
