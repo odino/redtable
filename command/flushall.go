@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odino/redtable/resp"
 )
 
 type FlushAll struct{}
@@ -31,7 +32,7 @@ func (cmd *FlushAll) Run(ctx context.Context, tbl *bigtable.Table) (any, error) 
 	}
 
 	if len(keys) == 0 {
-		return "OK", nil
+		return resp.OK, nil
 	}
 
 	_, err = tbl.ApplyBulk(ctx, keys, muts)
