@@ -15,6 +15,12 @@ services:
         condition: service_started
       bigtable:
         condition: service_started
+    healthcheck:
+      test: ["CMD", "echo", "PING", "|", "nc", "localhost", "6380", "-q", "1"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
   redis:
     image: "redis:alpine"
     ports:
