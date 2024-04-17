@@ -70,3 +70,10 @@ FLUSHALL SYNC|OK
 GET x|_
 FLUSHALL SYNC ASYNC|!syntax error
 FLUSHALL X|!syntax error
+
+# https://redis.io/docs/latest/commands/append/
+APPEND x|!wrong number of arguments for 'append' command
+APPEND x x x|!wrong number of arguments for 'append' command
+APPEND x 123|$3
+APPEND x 123|$6
+GET x|123123

@@ -20,6 +20,10 @@ func SimpleString(s string) redcon.SimpleString {
 	return redcon.SimpleString(s)
 }
 
+func SimpleInt(i int) redcon.SimpleInt {
+	return redcon.SimpleInt(i)
+}
+
 var OK = SimpleString("OK")
 
 type Arg string

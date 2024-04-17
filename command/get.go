@@ -3,10 +3,10 @@ package command
 import (
 	"context"
 	"errors"
-	"time"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/resp"
+	"github.com/odino/redtable/util"
 )
 
 type Get struct {
@@ -30,38 +30,11 @@ func (cmd *Get) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 		return nil, err
 	}
 
-	v, ok := row["_values"]
+	val, ok := util.ReadBTValue(row)
 
 	if !ok {
 		return nil, nil
 	}
 
-	var hasValue bool
-	var value string
-	var isExpired bool
-
-	for _, c := range v {
-		if c.Column == "_values:value" {
-			value = string(c.Value)
-			hasValue = true
-		}
-
-		if c.Column == "_values:exp" {
-			ts, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", string(c.Value))
-
-			if err != nil {
-				continue
-			}
-
-			if time.Until(ts) <= 0 {
-				isExpired = true
-			}
-		}
-	}
-
-	if !hasValue || isExpired {
-		return nil, nil
-	}
-
-	return value, nil
+	return val, nil
 }

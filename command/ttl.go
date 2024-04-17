@@ -7,7 +7,6 @@ import (
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/resp"
-	"github.com/tidwall/redcon"
 )
 
 type TTL struct {
@@ -54,5 +53,5 @@ func (cmd *TTL) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 		}
 	}
 
-	return redcon.SimpleInt(val), nil
+	return resp.SimpleInt(val), nil
 }

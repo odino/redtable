@@ -11,6 +11,7 @@ A (somewhat) redis-compliant server, backed by BigTable.
 Supported commands:
 
 ```
+APPEND
 FLUSHALL
 GET
 SET
@@ -33,7 +34,6 @@ cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/)
 These commands are currently not supported (but most likely under evaluation):
 
 ```
-APPEND
 ASKING
 AUTH
 BGREWRITEAOF

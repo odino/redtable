@@ -31,6 +31,8 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 		cmd = &Del{}
 	case "ttl":
 		cmd = &TTL{}
+	case "append":
+		cmd = &Append{}
 	default:
 		fmtargs := []string{}
 
