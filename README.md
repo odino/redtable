@@ -12,20 +12,22 @@ Supported commands:
 
 ```
 FLUSHALL
+GET
 SET
 ```
 
 These features are not supported (but most likely under evaluation):
 
 ```
-SET with EXAT 
+GET does not return "WRONGTYPE Operation against a key holding the wrong kind of value" on the wrong type
+SET with EXAT
 SET with PEXAT
 ```
 
 You can generate this list with:
 
 ```sh
-cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/); split(b[2], c, /--/); print c[1]}'
+cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/); print b[2]} | sort'
 ```
 
 These commands are currently not supported (but most likely under evaluation):
@@ -428,7 +430,7 @@ PING
 Our test suite is a simple series of commands and expected output
 executed against a real redis instance, and then redtable, with the
 expectations that both behave the same. We spawn a python redis client
-and run all of this commands one by one.
+and run all of these commands one by one.
 
 To run tests manually just:
 

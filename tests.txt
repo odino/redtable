@@ -42,8 +42,15 @@ TTL c|$10
 SET c 1 EX 10 KEEPTTL|!syntax error
 SET d 1 GET|_
 SET d 2 GET|1
-SET e 2 EXAT 1|!unsupported in redtable: SET with EXAT -- open an issue at https://github.com/odino/redtable/issues
-SET e 2 PEXAT 1|!unsupported in redtable: SET with PEXAT -- open an issue at https://github.com/odino/redtable/issues
+SET e 2 EXAT 1|!unsupported in redtable: SET with EXAT
+SET e 2 PEXAT 1|!unsupported in redtable: SET with PEXAT
+
+# https://redis.io/docs/latest/commands/get/
+@flushall
+GET x|_
+SET x 1|OK
+GET x|1
+GET some_hash_field|!unsupported in redtable: GET does not return "WRONGTYPE Operation against a key holding the wrong kind of value" on the wrong type
 
 # https://redis.io/docs/latest/commands/flushall/
 @flushall
