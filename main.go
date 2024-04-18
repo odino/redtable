@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"sync/atomic"
 	"time"
 
 	"cloud.google.com/go/bigtable"
@@ -10,6 +11,8 @@ import (
 	"github.com/odino/redtable/util"
 	"github.com/tidwall/redcon"
 )
+
+var ready = &atomic.Bool{}
 
 func main() {
 	// Give redtable some time to wake up
@@ -22,6 +25,7 @@ func main() {
 	table := util.Getenv("TABLE")
 
 	// Initializations
+	shutdown := make(chan bool)
 	err := util.CreateTable(project, instance, table)
 	util.HandleNotHandle(err)
 
@@ -30,18 +34,40 @@ func main() {
 
 	// HERE COMES THE FUN!
 	log.Printf("starting redtable server at %s", port)
+	server := redcon.NewServerNetwork("tcp", ":"+port, getHandler(tbl, shutdown), onConnect, nil)
+	go func() {
+		err = server.ListenAndServe()
+		util.HandleNotHandle(err)
+	}()
+	ready.Store(true)
 
-	err = redcon.ListenAndServe(":"+port, getHandler(tbl), onConnect, onClose)
+	// shutting down
+	<-shutdown
+	handleShutdown(ready, server)
+}
+
+func handleShutdown(ready *atomic.Bool, server *redcon.Server) {
+	log.Printf("shutdown sequence initiated 🚀")
+	ready.Store(false)
+	time.Sleep(time.Second * 1)
+	err := server.Close()
 
 	if err != nil {
-		panic(err)
+		log.Print(err)
 	}
+
+	log.Printf("goodbye chief 👋")
 }
 
 type handler func(conn redcon.Conn, cmd redcon.Command)
 
-func getHandler(tbl *bigtable.Table) handler {
+func getHandler(tbl *bigtable.Table, shutdown chan bool) handler {
 	return func(conn redcon.Conn, cmd redcon.Command) {
+		if !ready.Load() {
+			conn.WriteError("server not ready")
+			return
+		}
+
 		cmds := []resp.Arg{}
 
 		for _, c := range cmd.Args {
@@ -51,6 +77,12 @@ func getHandler(tbl *bigtable.Table) handler {
 		res, err := command.Process(string(cmds[0]), cmds[1:], tbl)
 
 		if err != nil {
+			if err == resp.ErrShutdown {
+				conn.WriteString("AS YOU WISH")
+				shutdown <- true
+				return
+			}
+
 			conn.WriteError(err.Error())
 			return
 		}
@@ -60,10 +92,11 @@ func getHandler(tbl *bigtable.Table) handler {
 }
 
 func onConnect(conn redcon.Conn) bool {
+	if !ready.Load() {
+		log.Printf("reject: %s (server not ready)", conn.RemoteAddr())
+		return false
+	}
+
 	log.Printf("accept: %s", conn.RemoteAddr())
 	return true
-}
-
-func onClose(conn redcon.Conn, err error) {
-	log.Printf("closed: %s, err: %v", conn.RemoteAddr(), err)
 }

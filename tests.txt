@@ -12,6 +12,10 @@ set x 1|OK
 # case in option
 SET x 1 KEEPTTL|OK
 set x 1 keepttl|OK
+SET x 1 EX 0|!invalid expire time in 'set' command
+SET x 1 EX 1.1|!value is not an integer or out of range
+SET x 1 EX -1|!invalid expire time in 'set' command
+SET x 1 PX 0|!invalid expire time in 'set' command
 
 # https://redis.io/docs/latest/commands/set/
 @flushall
@@ -47,6 +51,7 @@ SET e 2 PEXAT 1|!unsupported in redtable: SET with PEXAT
 
 # https://redis.io/docs/latest/commands/get/
 @flushall
+GET|!wrong number of arguments for 'get' command
 GET x|_
 SET x 1|OK
 GET x|1
@@ -77,3 +82,8 @@ APPEND x x x|!wrong number of arguments for 'append' command
 APPEND x 123|$3
 APPEND x 123|$6
 GET x|123123
+
+# https://redis.io/docs/latest/commands/shutdown/
+# WE CAN'T REALLY TEST THIS LOL
+SHUTDOWN WRONG_ARG|!syntax error
+SHUTDOWN ABORT|!unsupported in redtable: SHUTDOWN with ABORT

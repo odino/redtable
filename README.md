@@ -15,6 +15,7 @@ APPEND
 FLUSHALL
 GET
 SET
+SHUTDOWN
 ```
 
 These features are not supported (but most likely under evaluation):
@@ -23,6 +24,7 @@ These features are not supported (but most likely under evaluation):
 GET does not return "WRONGTYPE Operation against a key holding the wrong kind of value" on the wrong type
 SET with EXAT
 SET with PEXAT
+SHUTDOWN with ABORT
 ```
 
 You can generate this list with:
@@ -78,12 +80,6 @@ COMMAND|GETKEYSANDFLAGS
 COMMAND|HELP
 COMMAND|INFO
 COMMAND|LIST
-CONFIG
-CONFIG|GET
-CONFIG|HELP
-CONFIG|RESETSTAT
-CONFIG|REWRITE
-CONFIG|SET
 COPY
 DBSIZE
 DEBUG
@@ -261,7 +257,6 @@ SETBIT
 SETEX
 SETNX
 SETRANGE
-SHUTDOWN
 SINTER
 SINTERCARD
 SINTERSTORE
@@ -377,6 +372,12 @@ ACL|SAVE
 ACL|SETUSER
 ACL|USERS
 ACL|WHOAMI
+CONFIG
+CONFIG|GET
+CONFIG|HELP
+CONFIG|RESETSTAT
+CONFIG|REWRITE
+CONFIG|SET
 CLUSTER
 CLUSTER|ADDSLOTS
 CLUSTER|ADDSLOTSRANGE

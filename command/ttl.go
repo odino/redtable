@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"cloud.google.com/go/bigtable"
@@ -15,7 +14,7 @@ type TTL struct {
 
 func (cmd *TTL) Parse(args []resp.Arg) error {
 	if len(args) < 1 {
-		errors.New("TTL requires at least a key")
+		return resp.ErrNumArgs("ttl")
 	}
 
 	cmd.Key = args[0].String()

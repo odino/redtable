@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/resp"
@@ -16,7 +15,7 @@ type Append struct {
 
 func (cmd *Append) Parse(args []resp.Arg) error {
 	if len(args) != 2 {
-		return errors.New("wrong number of arguments for 'append' command")
+		return resp.ErrNumArgs("append")
 	}
 
 	cmd.Key = args[0].String()

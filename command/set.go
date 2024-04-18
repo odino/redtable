@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -23,7 +22,7 @@ type Set struct {
 
 func (cmd *Set) Parse(args []resp.Arg) error {
 	if len(args) < 2 {
-		return errors.New("wrong number of arguments for 'set' command")
+		return resp.ErrNumArgs("set")
 	}
 
 	var skip bool
@@ -58,7 +57,11 @@ func (cmd *Set) Parse(args []resp.Arg) error {
 			skip = true
 
 			if err != nil {
-				return errors.New("value is not an integer or out of range")
+				return resp.ErrInt
+			}
+
+			if val <= 0 {
+				return resp.ErrInvalidExpire("set")
 			}
 
 			unit := time.Second

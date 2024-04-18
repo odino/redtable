@@ -2,7 +2,6 @@ package command
 
 import (
 	"context"
-	"errors"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/resp"
@@ -15,7 +14,7 @@ type Get struct {
 
 func (cmd *Get) Parse(args []resp.Arg) error {
 	if len(args) < 1 {
-		return errors.New("GET requires at least a key")
+		return resp.ErrNumArgs("get")
 	}
 
 	cmd.Key = args[0].String()
