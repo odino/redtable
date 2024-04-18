@@ -29,5 +29,9 @@ var OK = SimpleString("OK")
 type Arg string
 
 func (a Arg) IsOption(s string) bool {
-	return strings.EqualFold(s, string(a))
+	return strings.EqualFold(s, a.String())
+}
+
+func (a Arg) String() string {
+	return string(a)
 }

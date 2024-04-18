@@ -16,7 +16,7 @@ func (cmd *Del) Parse(args []resp.Arg) error {
 		return resp.ErrSyntax()
 	}
 
-	cmd.Key = string(args[0])
+	cmd.Key = args[0].String()
 
 	return nil
 }

@@ -1,98 +1,69 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/command"
 	"github.com/odino/redtable/resp"
+	"github.com/odino/redtable/util"
 	"github.com/tidwall/redcon"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 func main() {
+	// Give redtable some time to wake up
 	time.Sleep(1 * time.Second)
-	port := getenv("PORT", "6379")
-	project := getenv("PROJECT")
-	instance := getenv("INSTANCE")
-	tableName := getenv("TABLE")
 
-	admin, err := bigtable.NewAdminClient(context.Background(), project, instance)
+	// Get config from env
+	port := util.Getenv("PORT", "6379")
+	project := util.Getenv("PROJECT")
+	instance := util.Getenv("INSTANCE")
+	table := util.Getenv("TABLE")
 
-	if err != nil {
-		panic(err)
-	}
+	// Initializations
+	err := util.CreateTable(project, instance, table)
+	util.HandleNotHandle(err)
 
-	err = admin.CreateTableFromConf(context.Background(), &bigtable.TableConf{
-		TableID: tableName,
-		ColumnFamilies: map[string]bigtable.Family{
-			"_values": {GCPolicy: bigtable.MaxVersionsGCPolicy(1)},
-		},
-	})
+	tbl, err := util.GetTable(project, instance, table)
+	util.HandleNotHandle(err)
 
-	if err != nil {
-		if status.Code(err) != codes.AlreadyExists {
-			panic(err)
-		}
-	}
-
-	client, err := bigtable.NewClient(context.Background(), project, instance)
-
-	if err != nil {
-		panic(err)
-	}
-
-	tbl := client.Open(tableName)
-
+	// HERE COMES THE FUN!
 	log.Printf("starting redtable server at %s", port)
 
-	err = redcon.ListenAndServe(":"+port,
-		func(conn redcon.Conn, cmd redcon.Command) {
-			cmds := []resp.Arg{}
-
-			for _, c := range cmd.Args {
-				cmds = append(cmds, resp.Arg(c))
-			}
-
-			res, err := command.Process(string(cmds[0]), cmds[1:], tbl)
-
-			if err != nil {
-				conn.WriteError(err.Error())
-				return
-			}
-
-			conn.WriteAny(res)
-
-		},
-		func(conn redcon.Conn) bool {
-			log.Printf("accept: %s", conn.RemoteAddr())
-			return true
-		},
-		func(conn redcon.Conn, err error) {
-			log.Printf("closed: %s, err: %v", conn.RemoteAddr(), err)
-		},
-	)
+	err = redcon.ListenAndServe(":"+port, getHandler(tbl), onConnect, onClose)
 
 	if err != nil {
 		panic(err)
 	}
 }
 
-func getenv(key string, defaults ...string) string {
-	v, ok := os.LookupEnv(key)
+type handler func(conn redcon.Conn, cmd redcon.Command)
 
-	if !ok {
-		if len(defaults) == 0 {
-			panic(fmt.Sprintf("must provide env var '%s'", key))
+func getHandler(tbl *bigtable.Table) handler {
+	return func(conn redcon.Conn, cmd redcon.Command) {
+		cmds := []resp.Arg{}
+
+		for _, c := range cmd.Args {
+			cmds = append(cmds, resp.Arg(c))
 		}
 
-		v = defaults[0]
-	}
+		res, err := command.Process(string(cmds[0]), cmds[1:], tbl)
 
-	return v
+		if err != nil {
+			conn.WriteError(err.Error())
+			return
+		}
+
+		conn.WriteAny(res)
+	}
+}
+
+func onConnect(conn redcon.Conn) bool {
+	log.Printf("accept: %s", conn.RemoteAddr())
+	return true
+}
+
+func onClose(conn redcon.Conn, err error) {
+	log.Printf("closed: %s, err: %v", conn.RemoteAddr(), err)
 }

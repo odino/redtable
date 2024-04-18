@@ -19,8 +19,8 @@ func (cmd *Append) Parse(args []resp.Arg) error {
 		return errors.New("wrong number of arguments for 'append' command")
 	}
 
-	cmd.Key = string(args[0])
-	cmd.Value = string(args[1])
+	cmd.Key = args[0].String()
+	cmd.Value = args[1].String()
 
 	return nil
 }

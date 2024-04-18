@@ -18,7 +18,7 @@ func (cmd *TTL) Parse(args []resp.Arg) error {
 		errors.New("TTL requires at least a key")
 	}
 
-	cmd.Key = string(args[0])
+	cmd.Key = args[0].String()
 
 	return nil
 }

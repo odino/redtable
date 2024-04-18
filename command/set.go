@@ -34,12 +34,12 @@ func (cmd *Set) Parse(args []resp.Arg) error {
 		}
 
 		if i == 0 {
-			cmd.Key = string(arg)
+			cmd.Key = arg.String()
 			continue
 		}
 
 		if i == 1 {
-			cmd.Value = string(arg)
+			cmd.Value = arg.String()
 			continue
 		}
 
@@ -54,7 +54,7 @@ func (cmd *Set) Parse(args []resp.Arg) error {
 			}
 
 			ts := time.Now()
-			val, err := strconv.Atoi(string(args[i+1]))
+			val, err := strconv.Atoi(args[i+1].String())
 			skip = true
 
 			if err != nil {

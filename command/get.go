@@ -18,7 +18,7 @@ func (cmd *Get) Parse(args []resp.Arg) error {
 		return errors.New("GET requires at least a key")
 	}
 
-	cmd.Key = string(args[0])
+	cmd.Key = args[0].String()
 
 	return nil
 }
