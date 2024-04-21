@@ -111,6 +111,10 @@ func Getenv(key string, defaults ...string) string {
 	return v
 }
 
+// Shall we even have GC?
+// Because of the distributed nature of BT, we could be reading
+// an expired row while another request is writing its value,
+// and we'd end up deleting the row incorrectly.
 func Gc(tbl *bigtable.Table) {
 	keys := []string{}
 	muts := []*bigtable.Mutation{}
