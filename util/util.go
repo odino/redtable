@@ -3,7 +3,9 @@ package util
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/bigtable"
@@ -29,13 +31,20 @@ func ReadBTValue(r bigtable.Row) (string, bool) {
 		}
 
 		if c.Column == "_values:exp" {
-			ts, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", string(c.Value))
+			ts, err := strconv.Atoi(string(c.Value))
+
+			if err != nil {
+				isExpired = true
+				continue
+			}
+
+			t := time.UnixMilli(int64(ts))
 
 			if err != nil {
 				continue
 			}
 
-			if time.Until(ts) <= 0 {
+			if time.Until(t) <= 0 {
 				isExpired = true
 			}
 		}
@@ -100,4 +109,39 @@ func Getenv(key string, defaults ...string) string {
 	}
 
 	return v
+}
+
+func Gc(tbl *bigtable.Table) {
+	keys := []string{}
+	muts := []*bigtable.Mutation{}
+
+	err := ScanTable(tbl, func(r bigtable.Row) bool {
+		_, ok := ReadBTValue(r)
+
+		if !ok {
+			keys = append(keys, r.Key())
+			mut := bigtable.NewMutation()
+			mut.DeleteRow()
+			muts = append(muts, mut)
+		}
+
+		return true
+	})
+
+	if err != nil {
+		log.Print(err)
+		return
+	}
+
+	_, err = tbl.ApplyBulk(context.Background(), keys, muts)
+
+	if err != nil {
+		log.Print(err)
+	}
+}
+
+type Scanner func(r bigtable.Row) bool
+
+func ScanTable(tbl *bigtable.Table, f Scanner) error {
+	return tbl.ReadRows(context.Background(), bigtable.InfiniteRange(""), f)
 }

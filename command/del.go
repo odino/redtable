@@ -26,5 +26,5 @@ func (cmd *Del) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	mut.DeleteRow()
 	err := tbl.Apply(ctx, cmd.Key, mut)
 
-	return 1, err
+	return resp.SimpleInt(1), err
 }

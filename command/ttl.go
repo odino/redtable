@@ -2,6 +2,7 @@ package command
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"cloud.google.com/go/bigtable"
@@ -39,14 +40,20 @@ func (cmd *TTL) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 
 	for _, c := range v {
 		if c.Column == "_values:exp" {
-			ts, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", string(c.Value))
+			ts, err := strconv.Atoi(string(c.Value))
+
+			if err != nil {
+				return nil, resp.ErrBrokenKey
+			}
+
+			t := time.UnixMilli(int64(ts))
 
 			if err != nil {
 				break
 			}
 
-			if time.Until(ts) >= 0 {
-				val = int(time.Until(ts).Round(time.Second).Seconds())
+			if time.Until(t) >= 0 {
+				val = int(time.Until(t).Round(time.Second).Seconds())
 				break
 			}
 		}

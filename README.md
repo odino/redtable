@@ -12,6 +12,7 @@ Supported commands:
 
 ```
 APPEND
+DBSIZE
 FLUSHALL
 GET
 SET
@@ -30,7 +31,7 @@ SHUTDOWN with ABORT
 You can generate this list with:
 
 ```sh
-cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/); print b[2]} | sort'
+cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/); print b[2]}' | sort
 ```
 
 These commands are currently not supported (but most likely under evaluation):
@@ -81,7 +82,6 @@ COMMAND|HELP
 COMMAND|INFO
 COMMAND|LIST
 COPY
-DBSIZE
 DEBUG
 DECR
 DECRBY

@@ -121,7 +121,7 @@ func (cmd *Set) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 
 	// an expiry is set
 	if !cmd.EX.IsZero() {
-		mut.Set("_values", "exp", bigtable.ServerTime, []byte(cmd.EX.Format("2006-01-02 15:04:05.999999999 -0700 MST")))
+		mut.Set("_values", "exp", bigtable.ServerTime, []byte(strconv.Itoa(int(cmd.EX.UnixMilli()))))
 	}
 
 	var ret any

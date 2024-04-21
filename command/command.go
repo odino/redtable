@@ -35,6 +35,8 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 		cmd = &Append{}
 	case "shutdown":
 		cmd = &Shutdown{}
+	case "dbsize":
+		cmd = &DbSize{}
 	default:
 		fmtargs := []string{}
 

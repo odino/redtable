@@ -6,6 +6,7 @@ services:
       PROJECT: redtable-test-project
       INSTANCE: redtable-test-instance
       TABLE: redtable
+      GC_INTERVAL: 1
     ports:
       - "6380:6380"
     volumes:

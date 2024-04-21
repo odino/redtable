@@ -5,6 +5,7 @@ import (
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/resp"
+	"github.com/odino/redtable/util"
 )
 
 type FlushAll struct {
@@ -36,7 +37,7 @@ func (cmd *FlushAll) doRun(ctx context.Context, tbl *bigtable.Table) (any, error
 	keys := []string{}
 	muts := []*bigtable.Mutation{}
 
-	err := tbl.ReadRows(context.Background(), bigtable.InfiniteRange(""), func(r bigtable.Row) bool {
+	err := util.ScanTable(tbl, func(r bigtable.Row) bool {
 		keys = append(keys, r.Key())
 		mut := bigtable.NewMutation()
 		mut.DeleteRow()

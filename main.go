@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strconv"
 	"sync/atomic"
 	"time"
 
@@ -23,10 +24,12 @@ func main() {
 	project := util.Getenv("PROJECT")
 	instance := util.Getenv("INSTANCE")
 	table := util.Getenv("TABLE")
+	gcInterval, err := strconv.Atoi(util.Getenv("GC_INTERVAL", "600"))
+	util.HandleNotHandle(err)
 
 	// Initializations
 	shutdown := make(chan bool)
-	err := util.CreateTable(project, instance, table)
+	err = util.CreateTable(project, instance, table)
 	util.HandleNotHandle(err)
 
 	tbl, err := util.GetTable(project, instance, table)
@@ -35,10 +38,18 @@ func main() {
 	// HERE COMES THE FUN!
 	log.Printf("starting redtable server at %s", port)
 	server := redcon.NewServerNetwork("tcp", ":"+port, getHandler(tbl, shutdown), onConnect, nil)
+
 	go func() {
 		err = server.ListenAndServe()
 		util.HandleNotHandle(err)
 	}()
+
+	go func() {
+		for range time.Tick(time.Second * time.Duration(gcInterval)) {
+			util.Gc(tbl)
+		}
+	}()
+
 	ready.Store(true)
 
 	// shutting down
@@ -48,6 +59,7 @@ func main() {
 
 func handleShutdown(ready *atomic.Bool, server *redcon.Server) {
 	log.Printf("shutdown sequence initiated 🚀")
+
 	ready.Store(false)
 	time.Sleep(time.Second * 1)
 	err := server.Close()
@@ -93,7 +105,7 @@ func getHandler(tbl *bigtable.Table, shutdown chan bool) handler {
 
 func onConnect(conn redcon.Conn) bool {
 	if !ready.Load() {
-		log.Printf("reject: %s (server not ready)", conn.RemoteAddr())
+		log.Printf("rejected connection: %s (server not ready)", conn.RemoteAddr())
 		return false
 	}
 

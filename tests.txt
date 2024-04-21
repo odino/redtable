@@ -87,3 +87,24 @@ GET x|123123
 # WE CAN'T REALLY TEST THIS LOL
 SHUTDOWN WRONG_ARG|!syntax error
 SHUTDOWN ABORT|!unsupported in redtable: SHUTDOWN with ABORT
+
+# https://redis.io/docs/latest/commands/dbsize/
+@flushall
+DBSIZE X|!wrong number of arguments for 'dbsize' command
+DBSIZE|$0
+SET x 1|OK
+DBSIZE|$1
+SET a 1|OK
+SET b 1|OK
+SET c 1|OK
+DBSIZE|$4
+DEL c|$1
+DBSIZE|$3
+SET c 1 PX 50|OK
+DBSIZE|$4
+@sleep 1
+DBSIZE|$3
+#SET d 1 PX 10|OK
+#DBSIZE|$4
+#@sleep 0.015
+#DBSIZE|$3

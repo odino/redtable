@@ -28,6 +28,7 @@ var OK = SimpleString("OK")
 
 var ErrShutdown = errors.New("received SHUTDOWN command")
 var ErrInt = errors.New("value is not an integer or out of range")
+var ErrBrokenKey = errors.New("value at key is 'broken', consider deleting it or reporting the issue at https://github.com/odino/redtable/issues")
 
 var ErrNumArgs = func(cmd string) error {
 	return fmt.Errorf("wrong number of arguments for '%s' command", cmd)
