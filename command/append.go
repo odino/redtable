@@ -33,11 +33,11 @@ func (cmd *Append) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 		return nil, err
 	}
 
-	val, ok := util.ReadBTValue(row)
+	res := util.NewResult(row)
 
-	if !ok {
+	if !res.Found {
 		return nil, nil
 	}
 
-	return resp.SimpleInt(len(val)), nil
+	return resp.SimpleInt(len(res.Value)), nil
 }

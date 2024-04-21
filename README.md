@@ -40,7 +40,6 @@ These commands are currently not supported (but most likely under evaluation):
 ASKING
 AUTH
 BGREWRITEAOF
-BGSAVE
 BITCOUNT
 BITFIELD
 BITFIELD_RO
@@ -357,6 +356,7 @@ ACL|SAVE
 ACL|SETUSER
 ACL|USERS
 ACL|WHOAMI
+BGSAVE
 CONFIG
 CONFIG|GET
 CONFIG|HELP

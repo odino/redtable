@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"cloud.google.com/go/bigtable"
@@ -13,48 +12,47 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func ReadBTValue(r bigtable.Row) (string, bool) {
+func NewResult(r bigtable.Row) Result {
+	res := Result{Row: r, Key: r.Key()}
+
 	v, ok := r["_values"]
 
 	if !ok {
-		return "", false
+		return res
 	}
-
-	var hasValue bool
-	var value string
-	var isExpired bool
 
 	for _, c := range v {
 		if c.Column == "_values:value" {
-			value = string(c.Value)
-			hasValue = true
-		}
-
-		if c.Column == "_values:exp" {
-			ts, err := strconv.Atoi(string(c.Value))
-
-			if err != nil {
-				isExpired = true
-				continue
-			}
-
-			t := time.UnixMilli(int64(ts))
-
-			if err != nil {
-				continue
-			}
-
-			if time.Until(t) <= 0 {
-				isExpired = true
-			}
+			res.Timestamp = time.UnixMicro(int64(c.Timestamp))
+			res.Found = true
+			res.Value = string(c.Value)
 		}
 	}
 
-	if !hasValue || isExpired {
-		return "", false
-	}
+	return res
+}
 
-	return value, true
+type Result struct {
+	Row       bigtable.Row
+	Key       string
+	Timestamp time.Time
+	Value     string
+	Found     bool
+}
+
+func GetRow(ctx context.Context, key string, tbl *bigtable.Table) (Result, error) {
+	row, err := tbl.ReadRow(
+		ctx,
+		key,
+		bigtable.RowFilter(
+			bigtable.ChainFilters(
+				bigtable.LatestNFilter(1),
+				bigtable.TimestampRangeFilter(time.Now(), time.Time{}),
+			),
+		),
+	)
+
+	return NewResult(row), err
 }
 
 func CreateTable(project string, instance string, table string) error {
@@ -116,9 +114,9 @@ func Gc(tbl *bigtable.Table) {
 	muts := []*bigtable.Mutation{}
 
 	err := ScanTable(tbl, func(r bigtable.Row) bool {
-		_, ok := ReadBTValue(r)
+		row := NewResult(r)
 
-		if !ok {
+		if !row.Found {
 			keys = append(keys, r.Key())
 			mut := bigtable.NewMutation()
 			mut.DeleteRow()

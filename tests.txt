@@ -102,7 +102,7 @@ DEL c|$1
 DBSIZE|$3
 SET c 1 PX 50|OK
 DBSIZE|$4
-@sleep 1
+@sleep 1.1
 DBSIZE|$3
 #SET d 1 PX 10|OK
 #DBSIZE|$4

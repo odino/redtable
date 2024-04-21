@@ -8,6 +8,7 @@ import (
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/resp"
+	"github.com/odino/redtable/util"
 )
 
 type Set struct {
@@ -20,10 +21,14 @@ type Set struct {
 	KeepTTL bool
 }
 
+var NO_EXPIRY_TS = time.Now().Add(time.Hour * 24 * 365 * 100)
+
 func (cmd *Set) Parse(args []resp.Arg) error {
 	if len(args) < 2 {
 		return resp.ErrNumArgs("set")
 	}
+
+	cmd.EX = NO_EXPIRY_TS
 
 	var skip bool
 	for i, arg := range args {
@@ -48,7 +53,7 @@ func (cmd *Set) Parse(args []resp.Arg) error {
 
 		if arg.IsOption("EX") || arg.IsOption("PX") {
 			// an expiry was already set, wtf are we doing?
-			if !cmd.EX.IsZero() {
+			if cmd.EX != NO_EXPIRY_TS {
 				return resp.ErrSyntax()
 			}
 
@@ -97,7 +102,7 @@ func (cmd *Set) Parse(args []resp.Arg) error {
 		return resp.ErrSyntax()
 	}
 
-	if !cmd.EX.IsZero() {
+	if cmd.EX != NO_EXPIRY_TS {
 		if cmd.KeepTTL {
 			return resp.ErrSyntax()
 		}
@@ -111,19 +116,6 @@ func (cmd *Set) Parse(args []resp.Arg) error {
 }
 
 func (cmd *Set) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
-	mut := bigtable.NewMutation()
-	mut.Set("_values", "value", bigtable.ServerTime, []byte(cmd.Value))
-
-	// unless KEEPTTL is specfied, we nuke the current expiry
-	if !cmd.KeepTTL {
-		mut.DeleteCellsInColumn("_values", "exp")
-	}
-
-	// an expiry is set
-	if !cmd.EX.IsZero() {
-		mut.Set("_values", "exp", bigtable.ServerTime, []byte(strconv.Itoa(int(cmd.EX.UnixMilli()))))
-	}
-
 	var ret any
 
 	// standard return value
@@ -131,10 +123,9 @@ func (cmd *Set) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 
 	// these options assume you have to read
 	// the current value
-	if cmd.NX || cmd.XX || cmd.Get {
+	if cmd.NX || cmd.XX || cmd.Get || cmd.KeepTTL {
 		// read
-		get := &Get{Key: cmd.Key}
-		val, err := get.Run(ctx, tbl)
+		res, err := util.GetRow(ctx, cmd.Key, tbl)
 
 		// if error, we cant go through
 		if err != nil {
@@ -142,20 +133,33 @@ func (cmd *Set) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 		}
 
 		// NX: no-op if value is set
-		if val != nil && cmd.NX {
+		if res.Found && cmd.NX {
 			return nil, nil
 		}
 
 		// XX: no-op if value is not set
-		if val == nil && cmd.XX {
+		if !res.Found && cmd.XX {
 			return nil, nil
 		}
 
 		// GET: return previous value
 		if cmd.Get {
-			ret = val
+			if !res.Found {
+				ret = nil
+			} else {
+				ret = res.Value
+			}
+
+		}
+
+		if cmd.KeepTTL && res.Found {
+			cmd.EX = res.Timestamp
 		}
 	}
+
+	mut := bigtable.NewMutation()
+	mut.DeleteRow()
+	mut.Set("_values", "value", bigtable.Timestamp(cmd.EX.UnixMicro()), []byte(cmd.Value))
 
 	err := tbl.Apply(ctx, cmd.Key, mut)
 
