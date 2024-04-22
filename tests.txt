@@ -139,3 +139,18 @@ TTL x|$1
 SET y 1|OK
 TTL y|$-1
 TTL z|$-2
+
+# https://redis.io/docs/latest/commands/copy/
+@flushall
+COPY x y|$0
+SET x 1|OK
+COPY x y|$1
+GET y|1
+SET x 1 EX 100|OK
+COPY x z|$1
+TTL z|$100
+SET a 100|OK
+SET b 200|OK
+COPY a z|$0
+COPY b z REPLACE|$1
+GET z|200

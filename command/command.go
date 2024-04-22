@@ -41,6 +41,8 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 		cmd = &BitCount{}
 	case "getdel":
 		cmd = &GetDel{}
+	case "copy":
+		cmd = &Copy{}
 	default:
 		fmtargs := []string{}
 

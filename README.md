@@ -21,6 +21,7 @@ operating on a subset of data structures redis users might be familiar with:
 ```
 APPEND
 BITCOUNT
+COPY
 DBSIZE
 FLUSHALL
 GET
@@ -49,7 +50,6 @@ cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/)
 These commands are currently not supported (but most likely under evaluation):
 
 ```
-COPY
 DEL
 DECR
 DECRBY

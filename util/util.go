@@ -15,8 +15,9 @@ import (
 )
 
 type Row struct {
-	Expiry time.Time
+	Key    string
 	Value  string
+	Expiry time.Time
 }
 
 // Fetches a Row from bigtable, and returns:
@@ -46,6 +47,34 @@ func DeleteRow(ctx context.Context, key string, tbl *bigtable.Table) (bool, erro
 	return found, err
 }
 
+type QueryOption func(Row, *bigtable.Mutation, []bigtable.ApplyOption) (*bigtable.Mutation, []bigtable.ApplyOption)
+
+func IfNotExistsQueryOption(flag *bool) QueryOption {
+	return func(row Row, mut *bigtable.Mutation, options []bigtable.ApplyOption) (*bigtable.Mutation, []bigtable.ApplyOption) {
+		condMut := bigtable.NewCondMutation(bigtable.RowKeyFilter(row.Key), nil, mut)
+		options = append(options, bigtable.GetCondMutationResult(flag))
+
+		return condMut, options
+	}
+}
+
+func WriteRow(ctx context.Context, row Row, tbl *bigtable.Table, opts ...QueryOption) error {
+	mut := bigtable.NewMutation()
+	mut.Set(redtable.COLUMN_FAMILY, redtable.STRING_VALUE_COLUMN, bigtable.ServerTime, []byte(row.Value))
+
+	if !row.Expiry.IsZero() {
+		mut.Set(redtable.COLUMN_FAMILY, redtable.EXPIRY_COLUMN, bigtable.ServerTime, []byte(strconv.Itoa(int(row.Expiry.UnixMilli()))))
+	}
+
+	options := []bigtable.ApplyOption{}
+
+	for _, o := range opts {
+		mut, options = o(row, mut, options)
+	}
+
+	return tbl.Apply(ctx, row.Key, mut, options...)
+}
+
 // ParseRow converts a bigtable.Row result
 // into our own Row. Since the data models
 // are quite different (eg. multi-columns, multi-cells, cell-timestamp)
@@ -64,6 +93,10 @@ func ParseRow(row bigtable.Row) (Row, bool) {
 	var isExpired bool
 
 	for _, c := range v {
+		if r.Key == "" {
+			r.Key = c.Row
+		}
+
 		if c.Column == redtable.FQCN(redtable.STRING_VALUE_COLUMN) {
 			r.Value = string(c.Value)
 			hasValue = true
