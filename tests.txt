@@ -129,3 +129,13 @@ GETDEL x|_
 SET x 1|OK
 GETDEL x|1
 GET x|_
+
+# https://redis.io/docs/latest/commands/ttl/
+@flushall
+SET x 1 EX 2|OK
+TTL x|$2
+@sleep 0.6
+TTL x|$1
+SET y 1|OK
+TTL y|$-1
+TTL z|$-2
