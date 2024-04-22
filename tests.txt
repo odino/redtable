@@ -154,3 +154,8 @@ SET b 200|OK
 COPY a z|$0
 COPY b z REPLACE|$1
 GET z|200
+
+# https://redis.io/docs/latest/commands/echo/
+@flushall
+ECHO|!wrong number of arguments for 'echo' command
+ECHO 123|123

@@ -43,6 +43,8 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 		cmd = &GetDel{}
 	case "copy":
 		cmd = &Copy{}
+	case "echo":
+		cmd = &Echo{}
 	default:
 		fmtargs := []string{}
 
