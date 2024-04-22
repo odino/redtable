@@ -23,7 +23,7 @@ func (cmd *DbSize) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	var i int
 
 	err := tbl.ReadRows(context.Background(), bigtable.InfiniteRange(""), func(r bigtable.Row) bool {
-		if _, ok := util.ReadBTValue(r); ok {
+		if _, ok := util.ParseRow(r); ok {
 			i++
 		}
 

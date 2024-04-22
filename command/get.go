@@ -23,17 +23,15 @@ func (cmd *Get) Parse(args []resp.Arg) error {
 }
 
 func (cmd *Get) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
-	row, err := tbl.ReadRow(ctx, cmd.Key, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	row, ok, err := util.GetRow(ctx, cmd.Key, tbl)
 
 	if err != nil {
 		return nil, err
 	}
 
-	val, ok := util.ReadBTValue(row)
-
 	if !ok {
 		return nil, nil
 	}
 
-	return val, nil
+	return row.Value, nil
 }

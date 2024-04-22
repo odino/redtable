@@ -113,7 +113,7 @@ DBSIZE|$3
 @flushall
 BITCOUNT|!wrong number of arguments for 'bitcount' command
 BITCOUNT nokey|$0
-BITCOUNT nokey BYTE 1|!syntax error
+BITCOUNT nokey BYTE 1|$0
 SET mykey foobar|OK
 BITCOUNT mykey|$26
 BITCOUNT mykey 0 0|$4

@@ -23,20 +23,14 @@ func (cmd *BitCount) Parse(args []resp.Arg) error {
 		return resp.ErrNumArgs("bitcount")
 	}
 
-	var end bool
 	for i, arg := range args {
-		if end {
-			return resp.ErrSyntax()
-		}
-
 		if i == 0 {
 			cmd.Key = arg.String()
 		}
 
 		if arg.IsOption("BYTE") || arg.IsOption("BIT") {
 			cmd.Index = arg.String()
-			end = true
-			continue
+			break
 		}
 
 		if i == 1 || i == 2 {
@@ -68,13 +62,11 @@ func bitSetCount(v byte) byte {
 }
 
 func (cmd *BitCount) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
-	row, err := tbl.ReadRow(ctx, cmd.Key, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+	row, ok, err := util.GetRow(ctx, cmd.Key, tbl)
 
 	if err != nil {
 		return nil, err
 	}
-
-	val, ok := util.ReadBTValue(row)
 
 	if !ok {
 		return resp.SimpleInt(0), nil
@@ -82,7 +74,7 @@ func (cmd *BitCount) Run(ctx context.Context, tbl *bigtable.Table) (any, error) 
 
 	c := 0
 
-	for i, b := range []byte(val) {
+	for i, b := range []byte(row.Value) {
 		if cmd.HasStart && i < cmd.Start {
 			continue
 		}

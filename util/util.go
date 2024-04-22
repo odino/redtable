@@ -13,20 +13,38 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func ReadBTValue(r bigtable.Row) (string, bool) {
-	v, ok := r["_values"]
+type Row struct {
+	Expiry time.Time
+	Value  string
+}
+
+func GetRow(ctx context.Context, key string, tbl *bigtable.Table) (Row, bool, error) {
+	row, err := tbl.ReadRow(ctx, key, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+
+	if err != nil {
+		return Row{}, false, err
+	}
+
+	r, ok := ParseRow(row)
+
+	return r, ok, nil
+}
+
+func ParseRow(row bigtable.Row) (Row, bool) {
+	r := Row{}
+
+	v, ok := row["_values"]
 
 	if !ok {
-		return "", false
+		return r, false
 	}
 
 	var hasValue bool
-	var value string
 	var isExpired bool
 
 	for _, c := range v {
 		if c.Column == "_values:value" {
-			value = string(c.Value)
+			r.Value = string(c.Value)
 			hasValue = true
 		}
 
@@ -39,6 +57,7 @@ func ReadBTValue(r bigtable.Row) (string, bool) {
 			}
 
 			t := time.UnixMilli(int64(ts))
+			r.Expiry = t
 
 			if err != nil {
 				continue
@@ -51,10 +70,10 @@ func ReadBTValue(r bigtable.Row) (string, bool) {
 	}
 
 	if !hasValue || isExpired {
-		return "", false
+		return r, false
 	}
 
-	return value, true
+	return r, true
 }
 
 func CreateTable(project string, instance string, table string) error {
@@ -120,7 +139,7 @@ func Gc(tbl *bigtable.Table) {
 	muts := []*bigtable.Mutation{}
 
 	err := ScanTable(tbl, func(r bigtable.Row) bool {
-		_, ok := ReadBTValue(r)
+		_, ok := ParseRow(r)
 
 		if !ok {
 			keys = append(keys, r.Key())
