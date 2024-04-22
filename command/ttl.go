@@ -2,12 +2,11 @@ package command
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"cloud.google.com/go/bigtable"
-	"github.com/odino/redtable/redtable"
 	"github.com/odino/redtable/resp"
+	"github.com/odino/redtable/util"
 )
 
 type TTL struct {
@@ -25,39 +24,24 @@ func (cmd *TTL) Parse(args []resp.Arg) error {
 }
 
 func (cmd *TTL) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
-	row, err := tbl.ReadRow(ctx, cmd.Key, bigtable.RowFilter(bigtable.LatestNFilter(1)))
-
-	if err != nil {
-		return "", err
-	}
-
-	v, ok := row[redtable.COLUMN_FAMILY]
-
-	if !ok {
-		return nil, nil
-	}
+	row, ok, err := util.GetRow(ctx, cmd.Key, tbl)
 
 	val := -1
 
-	for _, c := range v {
-		if c.Column == redtable.FQCN(redtable.EXPIRY_COLUMN) {
-			ts, err := strconv.Atoi(string(c.Value))
+	if err != nil {
+		return nil, err
+	}
 
-			if err != nil {
-				return nil, resp.ErrBrokenKey
-			}
+	if !ok {
+		val = -2
+	}
 
-			t := time.UnixMilli(int64(ts))
+	if row.Expiry.IsZero() {
+		val = -1
+	}
 
-			if err != nil {
-				break
-			}
-
-			if time.Until(t) >= 0 {
-				val = int(time.Until(t).Round(time.Second).Seconds())
-				break
-			}
-		}
+	if time.Until(row.Expiry) >= 0 {
+		val = int(time.Until(row.Expiry).Round(time.Second).Seconds())
 	}
 
 	return resp.SimpleInt(val), nil

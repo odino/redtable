@@ -121,3 +121,11 @@ BITCOUNT mykey 1 1|$6
 BITCOUNT mykey 1 1 BYTE|$6
 #BITCOUNT mykey 5 30 BIT|$17
 #BITCOUNT mykey 5 30 BIT|!unsupported in redtable: BITCOUNT by BIT
+
+
+# https://redis.io/docs/latest/commands/getdel/
+@flushall
+GETDEL x|_
+SET x 1|OK
+GETDEL x|1
+GET x|_

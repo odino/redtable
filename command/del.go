@@ -5,6 +5,7 @@ import (
 
 	"cloud.google.com/go/bigtable"
 	"github.com/odino/redtable/resp"
+	"github.com/odino/redtable/util"
 )
 
 type Del struct {
@@ -22,9 +23,17 @@ func (cmd *Del) Parse(args []resp.Arg) error {
 }
 
 func (cmd *Del) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
-	mut := bigtable.NewMutation()
-	mut.DeleteRow()
-	err := tbl.Apply(ctx, cmd.Key, mut)
+	ok, err := util.DeleteRow(ctx, cmd.Key, tbl)
 
-	return resp.SimpleInt(1), err
+	if err != nil {
+		return nil, err
+	}
+
+	var res int
+
+	if ok {
+		res = 1
+	}
+
+	return resp.SimpleInt(res), err
 }

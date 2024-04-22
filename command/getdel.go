@@ -8,13 +8,13 @@ import (
 	"github.com/odino/redtable/util"
 )
 
-type Get struct {
+type GetDel struct {
 	Key string
 }
 
-func (cmd *Get) Parse(args []resp.Arg) error {
-	if len(args) < 1 {
-		return resp.ErrNumArgs("get")
+func (cmd *GetDel) Parse(args []resp.Arg) error {
+	if len(args) != 1 {
+		return resp.ErrNumArgs("getdel")
 	}
 
 	cmd.Key = args[0].String()
@@ -22,12 +22,14 @@ func (cmd *Get) Parse(args []resp.Arg) error {
 	return nil
 }
 
-func (cmd *Get) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
+func (cmd *GetDel) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	row, ok, err := util.GetRow(ctx, cmd.Key, tbl)
 
 	if !ok {
 		return nil, err
 	}
 
-	return row.Value, nil
+	_, err = util.DeleteRow(ctx, cmd.Key, tbl)
+
+	return row.Value, err
 }

@@ -35,6 +35,17 @@ func GetRow(ctx context.Context, key string, tbl *bigtable.Table) (Row, bool, er
 	return r, ok, nil
 }
 
+func DeleteRow(ctx context.Context, key string, tbl *bigtable.Table) (bool, error) {
+	del := bigtable.NewMutation()
+	del.DeleteRow()
+	mut := bigtable.NewCondMutation(bigtable.RowKeyFilter(key), del, nil)
+	var found bool
+	option := bigtable.GetCondMutationResult(&found)
+	err := tbl.Apply(ctx, key, mut, option)
+
+	return found, err
+}
+
 // ParseRow converts a bigtable.Row result
 // into our own Row. Since the data models
 // are quite different (eg. multi-columns, multi-cells, cell-timestamp)
