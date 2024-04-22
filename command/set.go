@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odino/redtable/redtable"
 	"github.com/odino/redtable/resp"
 )
 
@@ -112,16 +113,16 @@ func (cmd *Set) Parse(args []resp.Arg) error {
 
 func (cmd *Set) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	mut := bigtable.NewMutation()
-	mut.Set("_values", "value", bigtable.ServerTime, []byte(cmd.Value))
+	mut.Set(redtable.COLUMN_FAMILY, redtable.STRING_VALUE_COLUMN, bigtable.ServerTime, []byte(cmd.Value))
 
 	// unless KEEPTTL is specfied, we nuke the current expiry
 	if !cmd.KeepTTL {
-		mut.DeleteCellsInColumn("_values", "exp")
+		mut.DeleteCellsInColumn(redtable.COLUMN_FAMILY, redtable.EXPIRY_COLUMN)
 	}
 
 	// an expiry is set
 	if !cmd.EX.IsZero() {
-		mut.Set("_values", "exp", bigtable.ServerTime, []byte(strconv.Itoa(int(cmd.EX.UnixMilli()))))
+		mut.Set(redtable.COLUMN_FAMILY, redtable.EXPIRY_COLUMN, bigtable.ServerTime, []byte(strconv.Itoa(int(cmd.EX.UnixMilli()))))
 	}
 
 	var ret any

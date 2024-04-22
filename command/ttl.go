@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odino/redtable/redtable"
 	"github.com/odino/redtable/resp"
 )
 
@@ -30,7 +31,7 @@ func (cmd *TTL) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 		return "", err
 	}
 
-	v, ok := row["_values"]
+	v, ok := row[redtable.COLUMN_FAMILY]
 
 	if !ok {
 		return nil, nil
@@ -39,7 +40,7 @@ func (cmd *TTL) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	val := -1
 
 	for _, c := range v {
-		if c.Column == "_values:exp" {
+		if c.Column == redtable.COLUMN_FAMILY+":"+redtable.EXPIRY_COLUMN {
 			ts, err := strconv.Atoi(string(c.Value))
 
 			if err != nil {

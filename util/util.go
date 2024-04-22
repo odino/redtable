@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/bigtable"
+	"github.com/odino/redtable/redtable"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -42,7 +43,7 @@ func GetRow(ctx context.Context, key string, tbl *bigtable.Table) (Row, bool, er
 func ParseRow(row bigtable.Row) (Row, bool) {
 	r := Row{}
 
-	v, ok := row["_values"]
+	v, ok := row[redtable.COLUMN_FAMILY]
 
 	if !ok {
 		return r, false
@@ -52,12 +53,12 @@ func ParseRow(row bigtable.Row) (Row, bool) {
 	var isExpired bool
 
 	for _, c := range v {
-		if c.Column == "_values:value" {
+		if c.Column == redtable.COLUMN_FAMILY+":"+redtable.STRING_VALUE_COLUMN {
 			r.Value = string(c.Value)
 			hasValue = true
 		}
 
-		if c.Column == "_values:exp" {
+		if c.Column == redtable.COLUMN_FAMILY+":"+redtable.EXPIRY_COLUMN {
 			ts, err := strconv.Atoi(string(c.Value))
 
 			if err != nil {
@@ -95,7 +96,7 @@ func CreateTable(project string, instance string, table string) error {
 	err = admin.CreateTableFromConf(context.Background(), &bigtable.TableConf{
 		TableID: table,
 		ColumnFamilies: map[string]bigtable.Family{
-			"_values": {GCPolicy: bigtable.MaxVersionsGCPolicy(1)},
+			redtable.COLUMN_FAMILY: {GCPolicy: bigtable.MaxVersionsGCPolicy(1)},
 		},
 	})
 
