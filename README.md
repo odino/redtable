@@ -12,6 +12,7 @@ Supported commands:
 
 ```
 APPEND
+BITCOUNT
 DBSIZE
 FLUSHALL
 GET
@@ -22,6 +23,7 @@ SHUTDOWN
 These features are not supported (but most likely under evaluation):
 
 ```
+BITCOUNT by BIT
 GET does not return "WRONGTYPE Operation against a key holding the wrong kind of value" on the wrong type
 SET with EXAT
 SET with PEXAT
@@ -37,9 +39,6 @@ cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/)
 These commands are currently not supported (but most likely under evaluation):
 
 ```
-ASKING
-AUTH
-BITCOUNT
 BITFIELD
 BITFIELD_RO
 BITOP
@@ -355,6 +354,8 @@ ACL|SAVE
 ACL|SETUSER
 ACL|USERS
 ACL|WHOAMI
+ASKING
+AUTH
 BGREWRITEAOF
 BGSAVE
 CONFIG

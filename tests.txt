@@ -106,5 +106,18 @@ DBSIZE|$4
 DBSIZE|$3
 SET d 1 PX 10|OK
 DBSIZE|$4
-@sleep 0.015
+@sleep 0.2
 DBSIZE|$3
+
+# https://redis.io/docs/latest/commands/dbsize/
+@flushall
+BITCOUNT|!wrong number of arguments for 'bitcount' command
+BITCOUNT nokey|$0
+BITCOUNT nokey BYTE 1|!syntax error
+SET mykey foobar|OK
+BITCOUNT mykey|$26
+BITCOUNT mykey 0 0|$4
+BITCOUNT mykey 1 1|$6
+BITCOUNT mykey 1 1 BYTE|$6
+#BITCOUNT mykey 5 30 BIT|$17
+#BITCOUNT mykey 5 30 BIT|!unsupported in redtable: BITCOUNT by BIT
