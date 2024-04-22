@@ -15,6 +15,19 @@ operating on a subset of data structures redis users might be familiar with:
 * sorted sets
 * maps
 
+## Considerations
+
+There are some very predominant differences in our redis and
+redtable operate under the hood as, for example, bigtable has sporadic
+support for atomic operations.
+
+A simple example is issuing a `DEL k1 k2 k3`:
+redis return the count of keys it deletes, but
+bigtable does not support such operation (you can issue deletes in bulk,
+but no way to know which rows existed), so we execute a bulk get
+(to get the number of actual keys we're deleting) and then a bulk
+delete, and return `len(bulk_get(keys))`.
+
 ## Supported commands
 
 
