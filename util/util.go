@@ -18,6 +18,10 @@ type Row struct {
 	Value  string
 }
 
+// Fetches a Row from bigtable, and returns:
+// - the actual Row
+// - whether the row was found to begin with
+// - any underlying error
 func GetRow(ctx context.Context, key string, tbl *bigtable.Table) (Row, bool, error) {
 	row, err := tbl.ReadRow(ctx, key, bigtable.RowFilter(bigtable.LatestNFilter(1)))
 
@@ -30,6 +34,11 @@ func GetRow(ctx context.Context, key string, tbl *bigtable.Table) (Row, bool, er
 	return r, ok, nil
 }
 
+// ParseRow converts a bigtable.Row result
+// into our own Row. Since the data models
+// are quite different (eg. multi-columns, multi-cells, cell-timestamp)
+// we want to try to make sure we can parse a BT structure
+// into something that resembles a simple kv structure.
 func ParseRow(row bigtable.Row) (Row, bool) {
 	r := Row{}
 
@@ -109,7 +118,7 @@ func GetTable(project string, instance string, table string) (*bigtable.Table, e
 	return client.Open(table), nil
 }
 
-// The Go equivalent of "sorry not sorry"
+// HandleNotHandle is the Go equivalent of "sorry not sorry"
 func HandleNotHandle(err error) {
 	if err != nil {
 		panic(err)
