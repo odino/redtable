@@ -159,3 +159,10 @@ GET z|200
 @flushall
 ECHO|!wrong number of arguments for 'echo' command
 ECHO 123|123
+
+# https://redis.io/docs/latest/commands/del/
+@flushall
+SET x 1|OK
+SET y 1|OK
+SET z 1|OK
+DEL x y z a|$3

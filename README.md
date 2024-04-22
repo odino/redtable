@@ -23,8 +23,10 @@ APPEND
 BITCOUNT
 COPY
 DBSIZE
+DEL
 ECHO
 FLUSHALL
+FLUSHDB
 GET
 GETDEL
 SET
@@ -51,15 +53,14 @@ cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/)
 These commands are currently not supported (but most likely under evaluation):
 
 ```
-DEL
 DECR
 DECRBY
 EXISTS
 EXPIRE
-FLUSHDB
 TIME
 INCR
 INCRBY
+KEYS
 
 BITFIELD
 BITFIELD_RO
@@ -113,7 +114,6 @@ HSTRLEN
 HVALS
 INCRBYFLOAT
 INFO
-KEYS
 LASTSAVE
 LCS
 LINDEX

@@ -21,7 +21,7 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 	switch strings.ToLower(s) {
 	case "ping":
 		cmd = &Ping{}
-	case "flushall":
+	case "flushall", "flushdb":
 		cmd = &FlushAll{}
 	case "set":
 		cmd = &Set{}

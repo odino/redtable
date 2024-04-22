@@ -9,7 +9,7 @@ import (
 )
 
 type Del struct {
-	Key string
+	Keys []string
 }
 
 func (cmd *Del) Parse(args []resp.Arg) error {
@@ -17,23 +17,25 @@ func (cmd *Del) Parse(args []resp.Arg) error {
 		return resp.ErrSyntax()
 	}
 
-	cmd.Key = args[0].String()
+	for _, arg := range args {
+		cmd.Keys = append(cmd.Keys, arg.String())
+	}
 
 	return nil
 }
 
 func (cmd *Del) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
-	ok, err := util.DeleteRow(ctx, cmd.Key, tbl)
+	_, l, err := util.GetRows(ctx, cmd.Keys, tbl)
 
 	if err != nil {
 		return nil, err
 	}
 
-	var res int
+	err = util.DeleteRows(ctx, cmd.Keys, tbl)
 
-	if ok {
-		res = 1
+	if err != nil {
+		return nil, err
 	}
 
-	return resp.SimpleInt(res), err
+	return resp.SimpleInt(l), err
 }

@@ -36,6 +36,47 @@ func GetRow(ctx context.Context, key string, tbl *bigtable.Table) (Row, bool, er
 	return r, ok, nil
 }
 
+func GetRows(ctx context.Context, keys []string, tbl *bigtable.Table) ([]Row, int, error) {
+	rows := []Row{}
+	rl := bigtable.RowList{}
+
+	for _, k := range keys {
+		rl = append(rl, k)
+	}
+
+	err := tbl.ReadRows(ctx, rl, func(row bigtable.Row) bool {
+		r, ok := ParseRow(row)
+
+		if !ok {
+			return true
+		}
+
+		rows = append(rows, r)
+
+		return true
+	}, bigtable.RowFilter(bigtable.LatestNFilter(1)))
+
+	if err != nil {
+		return rows, 0, err
+	}
+
+	return rows, len(rows), nil
+}
+
+func DeleteRows(ctx context.Context, keys []string, tbl *bigtable.Table) error {
+	muts := []*bigtable.Mutation{}
+
+	for range keys {
+		del := bigtable.NewMutation()
+		del.DeleteRow()
+		muts = append(muts, del)
+	}
+
+	_, err := tbl.ApplyBulk(ctx, keys, muts)
+
+	return err
+}
+
 func DeleteRow(ctx context.Context, key string, tbl *bigtable.Table) (bool, error) {
 	del := bigtable.NewMutation()
 	del.DeleteRow()
