@@ -53,12 +53,12 @@ func ParseRow(row bigtable.Row) (Row, bool) {
 	var isExpired bool
 
 	for _, c := range v {
-		if c.Column == redtable.COLUMN_FAMILY+":"+redtable.STRING_VALUE_COLUMN {
+		if c.Column == redtable.FQCN(redtable.STRING_VALUE_COLUMN) {
 			r.Value = string(c.Value)
 			hasValue = true
 		}
 
-		if c.Column == redtable.COLUMN_FAMILY+":"+redtable.EXPIRY_COLUMN {
+		if c.Column == redtable.FQCN(redtable.EXPIRY_COLUMN) {
 			ts, err := strconv.Atoi(string(c.Value))
 
 			if err != nil {

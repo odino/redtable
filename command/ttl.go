@@ -40,7 +40,7 @@ func (cmd *TTL) Run(ctx context.Context, tbl *bigtable.Table) (any, error) {
 	val := -1
 
 	for _, c := range v {
-		if c.Column == redtable.COLUMN_FAMILY+":"+redtable.EXPIRY_COLUMN {
+		if c.Column == redtable.FQCN(redtable.EXPIRY_COLUMN) {
 			ts, err := strconv.Atoi(string(c.Value))
 
 			if err != nil {
