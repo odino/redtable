@@ -1,10 +1,21 @@
 # redtable
 
-A (somewhat) redis-compliant server, backed by BigTable.
+A redis server, backed by BigTable.
 
 ## Why
 
-(need to find a good excuse here)
+Redtable allows you to speak redis and persist in BigTable: it
+acts as a proxy that translates redis / RESP commands into queries
+to BigTable.
+
+Since in many use-cases redis is purely used as a "simple" cache, but it's 
+not as trivial to scale (single-threaded, with experiments to allow
+multithreading, RAM size, etc etc), I've been eyeing moving some
+workloads from caching on redis to BigTable, to ease operational overhead. 
+As part of this fun thought-process, I've been wondering what a
+proxy from RESP to BigTable would look like...
+
+...and well, I didn't want to wonder for much longer.
 
 The focus of redtable is to provide first-class support for commands
 operating on a subset of data structures redis users might be familiar with:
@@ -15,18 +26,128 @@ operating on a subset of data structures redis users might be familiar with:
 * sorted sets
 * maps
 
+## Supported commands
+
+Currently, all these commands are supported:
+
+```
+APPEND
+BITCOUNT
+COPY
+DBSIZE
+DECR
+DECRBY
+DEL
+ECHO
+EXISTS
+FLUSHALL
+FLUSHDB
+GET
+GETDEL
+KEYS
+INCR
+INCRBY
+RENAME
+SET
+SHUTDOWN
+TIME
+TTL
+QUIT
+```
+
+These features are not supported (but most likely under evaluation):
+
+```
+BITCOUNT by BIT
+GET does not return "WRONGTYPE Operation against a key holding the wrong kind of value" on the wrong type
+KEYS with a pattern other than *
+SET with EXAT
+SET with PEXAT
+SHUTDOWN with ABORT
+```
+
+Commands dealing with other data structures we're planning to support
+are coming up...
+
+## Local development
+
+All you need is `docker`. Run `make` and see redtable come to life; you can then:
+
+```sh
+# on redis itself
+$ nc localhost 6379
+PING
++PONG
+^C
+# on redtable, magically behaving the same
+$ nc localhost 6380
+PING
++PONG
+^C
+```
+
+## Tests
+
+Our test suite is a simple series of commands and expected output
+executed against a real redis instance, and then redtable, with the
+expectations that both behave the same. We spawn a python redis client
+and run all of these commands one by one.
+
+To run tests manually just:
+
+```sh
+# runs the services for local dev
+make
+# runs the tests
+# first against an actual redis instance
+# then same tests against redtable
+make test
+```
+
+You can also test a single command with `make test cmd=$COMMAND_YOU_WANNA_TEST`:
+
+```sh
+$ make test cmd=del     
+docker compose exec client python test.py redis 6379 del
+# https://redis.io/docs/latest/commands/del/
+@flushall
+SET x 1|OK
+SET x 1 > OK PASSED
+SET y 1|OK
+SET y 1 > OK PASSED
+SET z 1|OK
+SET z 1 > OK PASSED
+DEL x y z a|$3
+DEL x y z a > 3 PASSED
+
+ALL TESTS PASSED
+docker compose exec client python test.py redtable 6380 del
+# https://redis.io/docs/latest/commands/del/
+@flushall
+SET x 1|OK
+SET x 1 > OK PASSED
+SET y 1|OK
+SET y 1 > OK PASSED
+SET z 1|OK
+SET z 1 > OK PASSED
+DEL x y z a|$3
+DEL x y z a > 3 PASSED
+
+ALL TESTS PASSED
+```
+
 ## Considerations & misc
 
 ### Atomicity, transactions & what we do on a best-effort basis...
 
 There are some predominant differences in how redis and
 redtable operate under the hood as, for example, bigtable has sporadic
-support for atomic operations. 
+support for complex atomic/transactional operations. 
 
 In general, it's really tough to compare
 a distributed column / kv database such as BigTable to a (mostly)
 single-threaded, in-memory DB like redis -- therefore things like
-atomicity are implemented on a best-effort basis: if that is
+atomicity/transactions are implemented on a best-effort basis: if that is
 problematic...then maybe redtable is not for you. 
 
 A simple example is issuing a `DEL k1 k2 k3`:
@@ -39,8 +160,8 @@ illustrates the process:
 
 ```sh
 function del(keys):
-    rows = bulk_get(keys)
-    bulk_delete(keys)
+    rows = bigtable.bulk_get(keys)
+    bigtable.bulk_delete(keys)
 
     return len(rows)
 
@@ -76,52 +197,19 @@ While the approach of manually checking the timestamp in a separate column
 seems painful, the main reasons we do so is to be able to support bigtable's
 atomic operations, namely append / increment -- these operations rely on
 autmatically setting a server-generated timestamp when the cell is amended,
-and using a 1s GC TTL would make it so you'd increment a counter, just to see
+and using a `1s` GC policy would make it so you'd increment a counter, just to see
 it disappear straight away.
 
-## Supported commands
+### Data modeling
 
+Currently, we store each kv pairs as BT rows with 1 exact column (`_values:value`),
+but there's a case to be made for other examples of modeling, for example having one
+row representing all strings, and have colums represent keys, with cells containing
+their values.
 
-```
-APPEND
-BITCOUNT
-COPY
-DBSIZE
-DECR
-DECRBY
-DEL
-ECHO
-EXISTS
-FLUSHALL
-FLUSHDB
-GET
-GETDEL
-KEYS
-INCR
-INCRBY
-RENAME
-SET
-SHUTDOWN
-TIME
-TTL
-QUIT
-```
+There's still a lot to think about.
 
-These features are not supported (but most likely under evaluation):
-
-```
-BITCOUNT by BIT
-GET does not return "WRONGTYPE Operation against a key holding the wrong kind of value" on the wrong type
-SET with EXAT
-SET with PEXAT
-SHUTDOWN with ABORT
-```
-
-You can generate this list with:
-
-```sh
-cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/); print b[2]}' | sort
-```
+### Commands under evauation
 
 These commands are currently not supported (but most likely under evaluation):
 
@@ -310,7 +398,7 @@ ZUNION
 ZUNIONSTORE
 ```
 
-These commands are straight up not supported and out of scope for redtable, at least for now:
+### Commands out of scope
 
 ```
 ACL
@@ -482,69 +570,11 @@ XSETID
 XTRIM
 ```
 
-## Local development
+### No but for real, why?
 
-All you need is `docker`. Run `make` and see redtable come to life; you can then:
+![](https://imgflip.com/s/meme/Yao-Ming.jpg)
 
-```sh
-# on redis itself
-$ nc localhost 6379
-PING
-+PONG
-^C
-# on redtable, magically behaving the same
-$ nc localhost 6380
-PING
-+PONG
-^C
-```
+## Ack
 
-## Tests
-
-Our test suite is a simple series of commands and expected output
-executed against a real redis instance, and then redtable, with the
-expectations that both behave the same. We spawn a python redis client
-and run all of these commands one by one.
-
-To run tests manually just:
-
-```sh
-# runs the services for local dev
-make
-# runs the tests
-# first against an actual redis instance
-# then same tests against redtable
-make test
-```
-
-You can also test a single command with `make test cmd=$COMMAND_YOU_WANNA_TEST`:
-
-```sh
-$ make test cmd=del     
-docker compose exec client python test.py redis 6379 del
-# https://redis.io/docs/latest/commands/del/
-@flushall
-SET x 1|OK
-SET x 1 > OK PASSED
-SET y 1|OK
-SET y 1 > OK PASSED
-SET z 1|OK
-SET z 1 > OK PASSED
-DEL x y z a|$3
-DEL x y z a > 3 PASSED
-
-ALL TESTS PASSED
-docker compose exec client python test.py redtable 6380 del
-# https://redis.io/docs/latest/commands/del/
-@flushall
-SET x 1|OK
-SET x 1 > OK PASSED
-SET y 1|OK
-SET y 1 > OK PASSED
-SET z 1|OK
-SET z 1 > OK PASSED
-DEL x y z a|$3
-DEL x y z a > 3 PASSED
-
-ALL TESTS PASSED
-```
+Really, the heavylifting is done by [redcon](https://github.com/tidwall/redcon),
+a beautiful project by [Josh Baker](https://tidwall.com/).
