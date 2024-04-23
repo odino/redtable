@@ -47,6 +47,8 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 		cmd = &Echo{}
 	case "time":
 		cmd = &Time{}
+	case "rename":
+		cmd = &Rename{}
 	default:
 		fmtargs := []string{}
 

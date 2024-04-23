@@ -42,6 +42,7 @@ FLUSHALL
 FLUSHDB
 GET
 GETDEL
+RENAME
 SET
 SHUTDOWN
 TIME
@@ -74,7 +75,6 @@ EXPIRE
 INCR
 INCRBY
 KEYS
-RENAME
 
 BITFIELD
 BITFIELD_RO
@@ -464,4 +464,36 @@ make
 # first against an actual redis instance
 # then same tests against redtable
 make test
+```
+
+You can also test a single command with `make test cmd=$COMMAND_YOU_WANNA_TEST`:
+
+```sh
+$ make test cmd=del     
+docker compose exec client python test.py redis 6379 del
+# https://redis.io/docs/latest/commands/del/
+@flushall
+SET x 1|OK
+SET x 1 > OK PASSED
+SET y 1|OK
+SET y 1 > OK PASSED
+SET z 1|OK
+SET z 1 > OK PASSED
+DEL x y z a|$3
+DEL x y z a > 3 PASSED
+
+ALL TESTS PASSED
+docker compose exec client python test.py redtable 6380 del
+# https://redis.io/docs/latest/commands/del/
+@flushall
+SET x 1|OK
+SET x 1 > OK PASSED
+SET y 1|OK
+SET y 1 > OK PASSED
+SET z 1|OK
+SET z 1 > OK PASSED
+DEL x y z a|$3
+DEL x y z a > 3 PASSED
+
+ALL TESTS PASSED
 ```

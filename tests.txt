@@ -166,3 +166,17 @@ SET x 1|OK
 SET y 1|OK
 SET z 1|OK
 DEL x y z a|$3
+
+# https://redis.io/docs/latest/commands/rename/
+@flushall
+RENAME|!wrong number of arguments for 'rename' command
+RENAME x y|!no such key
+SET x 1|OK
+RENAME x y|OK
+GET x|_
+GET y|1
+RENAME y y|OK
+GET y|1
+SET a 1 EX 10|OK
+RENAME a b|OK
+TTL b|$10

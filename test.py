@@ -1,13 +1,39 @@
 import redis, sys
 
-script, host, port = sys.argv
+script, host, port = sys.argv[:3]
+command = None
+
+if len(sys.argv) > 3:
+    command = sys.argv[3]
+    
+    if command == "all":
+        command = None
 
 # Connect to Redis on localhost (default port is 6379)
 redis_client = redis.Redis(host=host, port=port)
 redis_client.flushall()
 
+def is_command(line):
+    needle = "# https://redis.io/docs/latest/commands/"
+    ok = line.startswith(needle)
+    cmd = None
+    
+    if ok:
+        cmd = list(filter(None, line[len(needle):].split("/")))[0]
+    
+    return [ok, cmd]
+
+current_command = None
 with open("tests.txt") as file:
     for line in file:
+        ok, cmd = is_command(line)
+        
+        if ok and command != None:
+            current_command = cmd
+            
+        if current_command != command:
+            continue
+        
         line = line.rstrip("\n")
         print(line)
         
