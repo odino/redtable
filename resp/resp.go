@@ -27,6 +27,7 @@ func SimpleInt(i int) redcon.SimpleInt {
 var OK = SimpleString("OK")
 
 var ErrShutdown = errors.New("received SHUTDOWN command")
+var ErrQuit = errors.New("received QUIT command")
 var ErrInt = errors.New("value is not an integer or out of range")
 var ErrBrokenKey = errors.New("value at key is 'broken', consider deleting it or reporting the issue at https://github.com/odino/redtable/issues")
 

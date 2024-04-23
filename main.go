@@ -89,13 +89,16 @@ func getHandler(tbl *bigtable.Table, shutdown chan bool) handler {
 		res, err := command.Process(string(cmds[0]), cmds[1:], tbl)
 
 		if err != nil {
-			if err == resp.ErrShutdown {
+			switch err {
+			case resp.ErrShutdown:
 				conn.WriteString("AS YOU WISH")
 				shutdown <- true
-				return
+			case resp.ErrQuit:
+				conn.Close()
+			default:
+				conn.WriteError(err.Error())
 			}
 
-			conn.WriteError(err.Error())
 			return
 		}
 
