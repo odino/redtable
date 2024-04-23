@@ -87,12 +87,14 @@ APPEND
 BITCOUNT
 COPY
 DBSIZE
+DECR
 DEL
 ECHO
 FLUSHALL
 FLUSHDB
 GET
 GETDEL
+INCR
 RENAME
 SET
 SHUTDOWN
@@ -119,11 +121,9 @@ cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/)
 These commands are currently not supported (but most likely under evaluation):
 
 ```
-DECR
 DECRBY
 EXISTS
 EXPIRE
-INCR
 INCRBY
 KEYS
 

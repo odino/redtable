@@ -15,9 +15,10 @@ import (
 )
 
 type Row struct {
-	Key    string
-	Value  string
-	Expiry time.Time
+	Key      string
+	Value    string
+	RawValue []byte
+	Expiry   time.Time
 }
 
 // Fetches a Row from bigtable, and returns:
@@ -140,6 +141,7 @@ func ParseRow(row bigtable.Row) (Row, bool) {
 
 		if c.Column == redtable.FQCN(redtable.STRING_VALUE_COLUMN) {
 			r.Value = string(c.Value)
+			r.RawValue = c.Value
 			hasValue = true
 		}
 

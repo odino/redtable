@@ -49,6 +49,10 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 		cmd = &Time{}
 	case "rename":
 		cmd = &Rename{}
+	case "incr":
+		cmd = &Incr{Name: "incr", Delta: 1}
+	case "decr":
+		cmd = &Incr{Name: "decr", Delta: -1}
 	default:
 		fmtargs := []string{}
 

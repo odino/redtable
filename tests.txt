@@ -180,3 +180,21 @@ GET y|1
 SET a 1 EX 10|OK
 RENAME a b|OK
 TTL b|$10
+
+# https://redis.io/docs/latest/commands/incr/
+@flushall
+INCR|!wrong number of arguments for 'incr' command
+INCR x|$1
+INCR x|$2
+INCR x|$3
+SET y a|OK
+INCR y|!value is not an integer or out of range
+
+# https://redis.io/docs/latest/commands/decr/
+@flushall
+DECR|!wrong number of arguments for 'decr' command
+DECR x|$-1
+DECR x|$-2
+DECR x|$-3
+SET y a|OK
+DECR y|!value is not an integer or out of range
