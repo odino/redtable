@@ -78,6 +78,10 @@ with open("tests.txt") as file:
         if type(got) is bytes:
             got = got.decode("utf-8")
             
+        if type(got) is list:
+            got.sort()
+            got = str(got)
+            
         assert exp == got, f'"{exp}" expected, got "{got}" (type {type(got)})'
         print(f"{cmd} > {exp} PASSED")
         

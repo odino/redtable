@@ -59,6 +59,8 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 		cmd = &IncrBy{Incr: Incr{Name: "decrby"}, Multiplier: -1}
 	case "exists":
 		cmd = &Exists{}
+	case "keys":
+		cmd = &Keys{}
 	default:
 		fmtargs := []string{}
 

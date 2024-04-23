@@ -96,6 +96,7 @@ FLUSHALL
 FLUSHDB
 GET
 GETDEL
+KEYS
 INCR
 INCRBY
 RENAME
@@ -103,6 +104,7 @@ SET
 SHUTDOWN
 TIME
 TTL
+QUIT
 ```
 
 These features are not supported (but most likely under evaluation):
@@ -125,8 +127,6 @@ These commands are currently not supported (but most likely under evaluation):
 
 ```
 EXPIRE
-KEYS
-QUIT
 
 BITFIELD
 BITFIELD_RO

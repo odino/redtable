@@ -225,3 +225,12 @@ EXISTS|!wrong number of arguments for 'exists' command
 EXISTS x|$0
 SET x 1|OK
 EXISTS x y|$1
+
+# https://redis.io/docs/latest/commands/keys/
+@flushall
+KEYS|!wrong number of arguments for 'keys' command
+SET x 1|OK
+SET y 1|OK
+SET z 1|OK
+KEYS *|[b'x', b'y', b'z']
+KEYS hell*|!unsupported in redtable: KEYS with a pattern other than *
