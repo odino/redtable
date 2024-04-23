@@ -91,6 +91,7 @@ DECR
 DECRBY
 DEL
 ECHO
+EXISTS
 FLUSHALL
 FLUSHDB
 GET
@@ -123,7 +124,6 @@ cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/)
 These commands are currently not supported (but most likely under evaluation):
 
 ```
-EXISTS
 EXPIRE
 KEYS
 

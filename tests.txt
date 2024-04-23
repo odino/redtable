@@ -218,3 +218,10 @@ DECRBY x 5|$-10
 DECRBY x a|!value is not an integer or out of range
 SET y a|OK
 DECRBY y 1|!value is not an integer or out of range
+
+# https://redis.io/docs/latest/commands/exists/
+@flushall
+EXISTS|!wrong number of arguments for 'exists' command
+EXISTS x|$0
+SET x 1|OK
+EXISTS x y|$1
