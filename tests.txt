@@ -198,3 +198,23 @@ DECR x|$-2
 DECR x|$-3
 SET y a|OK
 DECR y|!value is not an integer or out of range
+
+# https://redis.io/docs/latest/commands/incrby/
+@flushall
+INCRBY|!wrong number of arguments for 'incrby' command
+INCRBY x|!wrong number of arguments for 'incrby' command
+INCRBY x 5|$5
+INCRBY x 5|$10
+INCRBY x a|!value is not an integer or out of range
+SET y a|OK
+INCRBY y 1|!value is not an integer or out of range
+
+# https://redis.io/docs/latest/commands/decrby/
+@flushall
+DECRBY|!wrong number of arguments for 'decrby' command
+DECRBY x|!wrong number of arguments for 'decrby' command
+DECRBY x 5|$-5
+DECRBY x 5|$-10
+DECRBY x a|!value is not an integer or out of range
+SET y a|OK
+DECRBY y 1|!value is not an integer or out of range

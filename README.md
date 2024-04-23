@@ -30,7 +30,7 @@ atomicity are implemented on a best-effort basis: if that is
 problematic...then maybe redtable is not for you. 
 
 A simple example is issuing a `DEL k1 k2 k3`:
-redis return the count of keys it deletes, but
+redis returns the count of keys it deletes, but
 bigtable does not support such operation (you can issue deletes in bulk,
 but no way to know which rows existed), so we execute a bulk get
 (to get the number of actual keys we're deleting) and then a bulk
@@ -61,7 +61,7 @@ between `1`'s bulk_get / bulk_delete).
 
 Redtable will excel in those cases where you'd like to use redis 
 as (mostly) a cache, but are struggling to scale -- as it combines
-a very lightweight, multi-threaded redis-compliant server with the
+a very lightweight, multi-threaded redis-speaking server with the
 low-latency of BigTable.
 
 ### Why not using BigTable's GC as a way to implement key expiration?
@@ -88,6 +88,7 @@ BITCOUNT
 COPY
 DBSIZE
 DECR
+DECRBY
 DEL
 ECHO
 FLUSHALL
@@ -95,6 +96,7 @@ FLUSHDB
 GET
 GETDEL
 INCR
+INCRBY
 RENAME
 SET
 SHUTDOWN
@@ -121,10 +123,8 @@ cat tests.txt | grep unsupported | awk '{split($0,a,/[|]/); split(a[2],b,/(: )/)
 These commands are currently not supported (but most likely under evaluation):
 
 ```
-DECRBY
 EXISTS
 EXPIRE
-INCRBY
 KEYS
 
 BITFIELD
@@ -484,7 +484,7 @@ SCRIPT|LOAD
 
 ## Local development
 
-All you need is `docker`. Run `make` and see readtable come to life; you can then:
+All you need is `docker`. Run `make` and see redtable come to life; you can then:
 
 ```sh
 # on redis itself

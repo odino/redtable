@@ -53,6 +53,10 @@ func getCmd(s string, args []resp.Arg) (Command, error) {
 		cmd = &Incr{Name: "incr", Delta: 1}
 	case "decr":
 		cmd = &Incr{Name: "decr", Delta: -1}
+	case "incrby":
+		cmd = &IncrBy{Incr: Incr{Name: "incrby"}, Multiplier: 1}
+	case "decrby":
+		cmd = &IncrBy{Incr: Incr{Name: "decrby"}, Multiplier: -1}
 	default:
 		fmtargs := []string{}
 
