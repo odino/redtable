@@ -15,18 +15,69 @@ operating on a subset of data structures redis users might be familiar with:
 * sorted sets
 * maps
 
-## Considerations
+## Considerations & misc
 
-There are some very predominant differences in our redis and
+### Atomicity, transactions & what we do on a best-effort basis...
+
+There are some predominant differences in how redis and
 redtable operate under the hood as, for example, bigtable has sporadic
-support for atomic operations.
+support for atomic operations. 
+
+In general, it's really tough to compare
+a distributed column / kv database such as BigTable to a (mostly)
+single-threaded, in-memory DB like redis -- therefore things like
+atomicity are implemented on a best-effort basis: if that is
+problematic...then maybe redtable is not for you. 
 
 A simple example is issuing a `DEL k1 k2 k3`:
 redis return the count of keys it deletes, but
 bigtable does not support such operation (you can issue deletes in bulk,
 but no way to know which rows existed), so we execute a bulk get
 (to get the number of actual keys we're deleting) and then a bulk
-delete, and return `len(bulk_get(keys))`.
+delete, with obvious pitfalls -- here's some pseudo-code that
+illustrates the process:
+
+```sh
+function del(keys):
+    rows = bulk_get(keys)
+    bulk_delete(keys)
+
+    return len(rows)
+
+# in process 0
+set("x", 1)
+set("y", 1)
+
+# in process 1
+del("x", "y", "z")
+
+# in process 2
+set("z", 1)
+```
+
+Depending on when process `1`/`2` are running, `1` may report
+2 deletes while 3 have actually happened (`set` of `z` happens
+between `1`'s bulk_get / bulk_delete).
+
+Redtable will excel in those cases where you'd like to use redis 
+as (mostly) a cache, but are struggling to scale -- as it combines
+a very lightweight, multi-threaded redis-compliant server with the
+low-latency of BigTable.
+
+### Why not using BigTable's GC as a way to implement key expiration?
+
+It could be possible to use [BigTable's GC](https://cloud.google.com/bigtable/docs/gc-cell-level)
+to simulate redis' key expiry mechanism, but redtable instead stores the
+expiry of a key into a separate bigtable column -- meaning rows could possibly
+be fetched from bigtable, and "discarded" by the redtable server upon
+figuring out that their expiry is in the past.
+
+While the approach of manually checking the timestamp in a separate column
+seems painful, the main reasons we do so is to be able to support bigtable's
+atomic operations, namely append / increment -- these operations rely on
+autmatically setting a server-generated timestamp when the cell is amended,
+and using a 1s GC TTL would make it so you'd increment a counter, just to see
+it disappear straight away.
 
 ## Supported commands
 
