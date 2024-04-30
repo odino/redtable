@@ -2,6 +2,8 @@
 
 A redis server, backed by BigTable.
 
+> CURRENT STATUS: PLAY THING
+
 ## Why
 
 Redtable allows you to speak redis and persist in BigTable: it
